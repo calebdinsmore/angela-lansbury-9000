@@ -7,7 +7,7 @@ from nextcord.ext import commands, tasks
 
 from bot.cogs.auto_delete import auto_delete_helper
 from bot.utils import messages
-from bot.utils.constants import TESTING_GUILD_ID
+from bot.utils.constants import TESTING_GUILD_ID, BUMPERS_GUILD_ID
 from db import AutoDeleteType, DB, AutoDeleteChannelConfig
 
 
@@ -44,7 +44,7 @@ class AutoDeleteCommands(commands.Cog):
     async def check_for_stale_messages_error(self, e):
         sentry_sdk.capture_exception(e)
 
-    @slash_command(name='auto-delete', guild_ids=[TESTING_GUILD_ID],
+    @slash_command(name='auto-delete', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID],
                    default_member_permissions=Permissions(manage_guild=True))
     async def auto_delete(self, interaction: Interaction):
         """
