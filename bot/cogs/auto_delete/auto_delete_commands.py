@@ -44,7 +44,7 @@ class AutoDeleteCommands(commands.Cog):
     async def check_for_stale_messages_error(self, e):
         sentry_sdk.capture_exception(e)
 
-    @slash_command(name='auto-delete', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID], force_global=True,
+    @slash_command(name='auto-delete', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID],
                    default_member_permissions=Permissions(manage_guild=True))
     async def auto_delete(self, interaction: Interaction):
         """
