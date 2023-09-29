@@ -1,5 +1,7 @@
 # October Bumpers Bot
 
+For the bot's command reference, go to the [Wiki](https://github.com/calebdinsmore/october-bumpers-bot/wiki).
+
 ## Setup
 
 ### Install necessary Python tools
