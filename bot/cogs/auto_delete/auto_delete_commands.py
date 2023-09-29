@@ -1,3 +1,11 @@
+"""
+AutoDeleteCommands
+/auto-delete config
+/auto-delete stop
+
+This cog holds the task coroutine responsible for identifying and deleting stale messages as well as the slash
+commands listed above that configure channels to get messages auto-deleted.
+"""
 from typing import List
 
 import nextcord

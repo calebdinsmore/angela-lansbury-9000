@@ -1,3 +1,6 @@
+"""
+Collection of helper functions used by AutoDeleteCommands
+"""
 from typing import List
 
 import nextcord
@@ -10,6 +13,11 @@ class ConfigNotFound(Exception):
 
 
 async def fetch_anchor_message(channel: nextcord.TextChannel, config: AutoDeleteChannelConfig):
+    """
+    This function first attempts to fetch the anchor message for a channel config. If not found (i.e. it was deleted),
+    it then tries to fetch the original_anchor_message that the bot posted when /auto-delete config was invoked.
+    Failing that, it re-raises the exception.
+    """
     try:
         anchor_message = await channel.fetch_message(config.anchor_message)
     except nextcord.NotFound:
@@ -43,6 +51,7 @@ def get_stale_messages(all_messages: [nextcord.Message], config: AutoDeleteChann
     Gets stale messages that should be deleted.
     Side effect: if there are messages that are stale but shouldn't be deleted (e.g. photo message when config
     is set to delete only text messages), the most recent among them is set to be the new anchor message.
+    I should pull that side effect out, but I'm lazy, and this works.
     """
     stale_messages: List[nextcord.Message] = []
     for message in all_messages:
