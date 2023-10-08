@@ -5,6 +5,8 @@ from typing import List
 
 import nextcord
 import datetime as dt
+
+from bot.utils.messages import message_has_image
 from db import AutoDeleteChannelConfig, DB, AutoDeleteType
 
 
@@ -38,12 +40,6 @@ def remove_channel_config(guild_id: int, channel_id: int):
         raise ConfigNotFound()
     DB.s.delete(current_config)
     DB.s.commit()
-
-
-def message_has_image(message: nextcord.Message):
-    attachments_has_image = next(filter(lambda a: 'image' in a.content_type, message.attachments), False)
-    embeds_has_image = next(filter(lambda e: e.type == 'image', message.embeds), False)
-    return attachments_has_image or embeds_has_image
 
 
 def get_stale_messages(all_messages: [nextcord.Message], config: AutoDeleteChannelConfig):

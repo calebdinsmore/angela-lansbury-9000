@@ -6,5 +6,6 @@ from sqla_wrapper import Alembic
 
 from db.model import DB
 from db.model.auto_delete_channel_config import *
+from db.model.image_message_to_delete import *
 
 alembic = Alembic(DB, 'db/migrations')
