@@ -6,6 +6,10 @@ class DeleteImage(nextcord.ui.View):
         super().__init__()
         self.value = None
 
+    @nextcord.ui.button(label='1d', style=nextcord.ButtonStyle.blurple)
+    async def one(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        await self._handle_button(1, button, interaction)
+
     @nextcord.ui.button(label='7d', style=nextcord.ButtonStyle.blurple)
     async def seven(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
         await self._handle_button(7, button, interaction)
@@ -32,6 +36,7 @@ class DeleteImage(nextcord.ui.View):
         if interaction.user.id != original_image.cached_message.author.id:
             await interaction.send("You didn't send the image I'm asking about. Tsk tsk.", ephemeral=True)
             return
-        await interaction.send(f"You got it! I'll delete your message after {days} days.", ephemeral=True)
+        await interaction.send(f"You got it! I'll delete your message after {days} day{'s' if days != 1 else ''}.",
+                               ephemeral=True)
         self.value = days
         self.stop()

@@ -22,7 +22,7 @@ class ImageMessageDeleteCommands(commands.Cog):
         self.bot = bot
         self.check_for_expired_messages.start()
 
-    @tasks.loop(hours=12)
+    @tasks.loop(hours=1)
     async def check_for_expired_messages(self):
         if not self.bot.is_ready():
             return
