@@ -22,8 +22,8 @@ from db import AutoDeleteType, DB, AutoDeleteChannelConfig
 
 class AutoDeleteCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
-        self.check_for_stale_messages.start()
         self.bot = bot
+        self.check_for_stale_messages.start()
 
     @tasks.loop(seconds=30)
     async def check_for_stale_messages(self):

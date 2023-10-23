@@ -30,17 +30,24 @@ class ImageMessageDeleteCommands(commands.Cog):
         expired_messages: List[ImageMessageToDelete] = DB.s.execute(
             sa.select(ImageMessageToDelete)
             .where(ImageMessageToDelete.delete_after < now)
+            .where(ImageMessageToDelete.has_failed == None)
         ).scalars().all()
         for db_message_to_delete in expired_messages:
             guild = self.bot.get_guild(db_message_to_delete.guild_id)
             channel = guild.get_channel(db_message_to_delete.channel_id)
+            if not channel:
+                channel = await self.bot.fetch_channel(db_message_to_delete.channel_id)
             try:
                 message = await channel.fetch_message(db_message_to_delete.message_id)
                 await message.delete()
+                DB.s.delete(db_message_to_delete)
             except nextcord.NotFound:
                 sentry_sdk.capture_message(f'Failed to find message {db_message_to_delete}')
+                db_message_to_delete.has_failed = True
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
+                db_message_to_delete.has_failed = True
             finally:
-                DB.s.delete(db_message_to_delete)
                 DB.s.commit()
 
     @check_for_expired_messages.error

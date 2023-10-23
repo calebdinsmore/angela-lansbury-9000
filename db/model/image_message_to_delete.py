@@ -13,6 +13,7 @@ class ImageMessageToDelete(DB.Model):
     message_id: Mapped[int] = mapped_column(primary_key=True)
     delete_after: Mapped[datetime] = mapped_column()
     author_id: Mapped[int] = mapped_column()
+    has_failed: Mapped[bool] = mapped_column(nullable=True)
 
     def __repr__(self):
         return f'G: {self.guild_id} | C: {self.channel_id} | M: {self.message_id}'
