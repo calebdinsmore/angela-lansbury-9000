@@ -3,8 +3,11 @@ import sentry_sdk
 from nextcord.ext import commands
 
 from bot.cogs import AutoDeleteCommands, ImageMessageDeleteCommands
+from bot.cogs.activity.activity_commands import ActivityCommands
 from bot.config import Config
+from bot.events import on_member_join_event
 from bot.events.on_message_event import register_event
+from bot.utils import logger
 
 intents = nextcord.Intents.all()
 config = Config()
@@ -34,6 +37,9 @@ async def on_ready():
 def run():
     bot.add_cog(AutoDeleteCommands(bot))
     bot.add_cog(ImageMessageDeleteCommands(bot))
+    bot.add_cog(ActivityCommands(bot))
+    logger.register_bot(bot)
+    on_member_join_event.register_event(bot)
     register_event(bot)
     bot.run(config.BOT_TOKEN)
 
