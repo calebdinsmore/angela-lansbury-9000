@@ -12,7 +12,7 @@ from typing import List
 import nextcord
 import sentry_sdk
 import sqlalchemy as sa
-from nextcord import slash_command, Permissions, Interaction
+from nextcord import slash_command, Permissions, Interaction, SlashOption
 from nextcord.ext import commands, tasks
 
 from bot.utils import messages
@@ -65,7 +65,7 @@ class ImageMessageDeleteCommands(commands.Cog):
         pass
 
     @image_deleter.subcommand(name='retry', description='Retry failed image deletions.')
-    async def retry(self, interaction: Interaction):
+    async def retry(self, interaction: Interaction, delete_failures: bool = SlashOption(name='delete-failures')):
         await interaction.response.defer()
         retry_results: List[str] = []
         failed_messages: List[ImageMessageToDelete] = DB.s.execute(
@@ -85,16 +85,14 @@ class ImageMessageDeleteCommands(commands.Cog):
                 retry_results.append(f'- Successfully deleted message {failed_message}. Deleting record.')
                 deletions += 1
                 DB.s.delete(failed_message)
-            except nextcord.NotFound as e:
-                retry_results.append(f'- NotFound exception ({e}) for {failed_message}.')
-                failures += 1
             except Exception as e:
                 retry_results.append(f'- Hit exception ({e}) for {failed_message}.')
                 failures += 1
-            finally:
-                DB.s.commit()
+                if delete_failures:
+                    DB.s.delete(failed_message)
+        DB.s.commit()
         result_message = '\n'.join(retry_results)
-        result_message += f'Successful deletions: {deletions}\n' \
+        result_message += f'\nSuccessful deletions: {deletions}\n' \
                           f'Failed retries: {failures}'
         if len(retry_results) == 0:
             result_message = 'No failed deletions found.'
