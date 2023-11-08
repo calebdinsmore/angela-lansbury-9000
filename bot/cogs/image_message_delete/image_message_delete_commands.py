@@ -15,6 +15,7 @@ import sqlalchemy as sa
 from nextcord import slash_command, Permissions, Interaction
 from nextcord.ext import commands, tasks
 
+from bot.utils import messages
 from bot.utils.constants import BUMPERS_GUILD_ID, TESTING_GUILD_ID
 from db import DB, ImageMessageToDelete
 
@@ -97,5 +98,5 @@ class ImageMessageDeleteCommands(commands.Cog):
                           f'Failed retries: {failures}'
         if len(retry_results) == 0:
             result_message = 'No failed deletions found.'
-        await interaction.send(result_message, ephemeral=True)
+        await interaction.send(embed=messages.success(result_message), ephemeral=True)
 
