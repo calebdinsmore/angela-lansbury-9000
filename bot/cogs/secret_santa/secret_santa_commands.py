@@ -55,6 +55,12 @@ class SecretSantaCommands(commands.Cog):
         failures = await elf.send_recipient_embeds(self.bot, guild)
         await interaction.send(f'Sent out recipient answers! Failures: {failures}')
 
+    @santa_admin.subcommand(name='send-specific-pairing')
+    async def send_specific_pairing(self, interaction: Interaction):
+        guild = self.bot.get_guild(BUMPERS_GUILD_ID)
+        await elf.send_recipient_embeds(self.bot, guild, specific_id=627666924087672833)
+        await interaction.send(f'Pairing info sent to ID: 627666924087672833')
+
     @santa_admin.subcommand(name='remind', description='Remind Santas to send gifts')
     async def santa_remind(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True, with_message=True)

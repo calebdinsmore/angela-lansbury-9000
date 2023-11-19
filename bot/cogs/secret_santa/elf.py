@@ -154,7 +154,7 @@ async def handle_santa_message(bot: commands.Bot, interaction: Interaction, reci
                                         embed=messages.santa_message(message, interaction.user, show_name=True))
 
 
-async def send_recipient_embeds(bot: commands.Bot, guild: nextcord.Guild):
+async def send_recipient_embeds(bot: commands.Bot, guild: nextcord.Guild, specific_id: int = None):
     intro_content = "Hi! It's me, Angela Lansbury. I didn't just play Mrs. Santa Claus in the 'hit' made-for-TV movie of " \
                   "the same name–I'm living the role right now!\n\n" \
                   "You just received your gift recipient: the next step is to get a gift! Before (and after) that, you " \
@@ -168,6 +168,8 @@ async def send_recipient_embeds(bot: commands.Bot, guild: nextcord.Guild):
     pairings = DB.s.all(SantaParticipant)
     failures = []
     for pairing in pairings:
+        if specific_id is not None and pairing.santa_id != specific_id:
+            continue
         santa = bot.get_user(pairing.santa_id)
         recipient_csv_model = models.get(pairing.recipient_id)
         if not recipient_csv_model:
