@@ -4,6 +4,8 @@ elf.py (Secret Santa's Helper)
 import csv
 import os
 import random
+
+import sentry_sdk
 import sqlalchemy as sa
 from collections import defaultdict
 from typing import Dict, List
@@ -164,13 +166,19 @@ async def send_recipient_embeds(bot: commands.Bot, guild: nextcord.Guild):
                     "full message history in one place."
     models = build_models_from_csv(guild)
     pairings = DB.s.all(SantaParticipant)
+    failures = []
     for pairing in pairings:
         santa = bot.get_user(pairing.santa_id)
         recipient_csv_model = models.get(pairing.recipient_id)
         if not recipient_csv_model:
             return await bot.get_user(212416365317980171).send(embed=messages.error('Something went wrong!'))
-        await santa.send(embed=recipient_csv_model.answers_embed)
-        await santa.send(intro_content, embed=command_embed())
+        try:
+            await santa.send(embed=recipient_csv_model.answers_embed)
+            await santa.send(intro_content, embed=command_embed())
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            failures.append(santa.name)
+    return failures
 
 
 async def mark_sent(bot: commands.Bot, santa_id: int, tracking_info: str):

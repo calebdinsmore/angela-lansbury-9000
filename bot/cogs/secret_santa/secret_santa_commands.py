@@ -52,8 +52,8 @@ class SecretSantaCommands(commands.Cog):
             guild = self.bot.get_guild(BUMPERS_GUILD_ID)
         else:
             guild = interaction.guild
-        await elf.send_recipient_embeds(self.bot, guild)
-        await interaction.send('Sent out recipient answers!')
+        failures = await elf.send_recipient_embeds(self.bot, guild)
+        await interaction.send(f'Sent out recipient answers! Failures: {failures}')
 
     @santa_admin.subcommand(name='remind', description='Remind Santas to send gifts')
     async def santa_remind(self, interaction: Interaction):
