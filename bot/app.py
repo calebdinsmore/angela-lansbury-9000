@@ -28,7 +28,7 @@ sentry_sdk.init(
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=nextcord.Game(name='a role in every movie'))
+    await bot.change_presence(activity=nextcord.Game(name='Mrs. Santa Claus'))
     print('Logged in as')
     print(bot.user.name)
     print(bot.user.id)

@@ -153,6 +153,15 @@ async def handle_santa_message(bot: commands.Bot, interaction: Interaction, reci
 
 
 async def send_recipient_embeds(bot: commands.Bot, guild: nextcord.Guild):
+    intro_content = "Hi! It's me, Angela Lansbury. I didn't just play Mrs. Santa Claus in the 'hit' made-for-TV movie of " \
+                  "the same name–I'm living the role right now!\n\n" \
+                  "You just received your gift recipient: the next step is to get a gift! Before (and after) that, you " \
+                  "can use me to talk to both your recipient and your santa. Your recipient won't know it's you–don't " \
+                  "worry.\n" \
+                  "Once you've bought a gift, use the `/santa mark-sent` command to indicate both to me and to your " \
+                  "giftee that it's en route. Here's a quick reference of the commands you can use. You can use them " \
+                    "both here and in the bumpers server–if you do the latter, I'll also DM you here so you have the " \
+                    "full message history in one place."
     models = build_models_from_csv(guild)
     pairings = DB.s.all(SantaParticipant)
     for pairing in pairings:
@@ -161,6 +170,7 @@ async def send_recipient_embeds(bot: commands.Bot, guild: nextcord.Guild):
         if not recipient_csv_model:
             return await bot.get_user(212416365317980171).send(embed=messages.error('Something went wrong!'))
         await santa.send(embed=recipient_csv_model.answers_embed)
+        await santa.send(intro_content, embed=command_embed())
 
 
 async def mark_sent(bot: commands.Bot, santa_id: int, tracking_info: str):
@@ -190,3 +200,12 @@ def pairings_embed():
         else:
             description += f'||<@{pairing.santa_id}>|| => <@{pairing.recipient_id}>\n'
     return nextcord.Embed(title='Pairings', description=description)
+
+
+def command_embed():
+    embed = nextcord.Embed()
+    embed.add_field(name='/santa message', value='Use this command to send a message to either your giftee or your '
+                                                 "Santa. You'll indicate which one using the first command argument.")
+    embed.add_field(name='/santa mark-sent', value='Use this command to mark your gift as sent and pass along any '
+                                                   'tracking info you may have.')
+    return embed
