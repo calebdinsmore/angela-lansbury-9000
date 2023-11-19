@@ -31,8 +31,7 @@ class MemberMatchError(Exception):
 
 
 def try_to_get_member(csv_name: str, guild: nextcord.Guild):
-    csv_name = csv_name.lower()
-    member = nextcord.utils.get(guild.members, name=csv_name)
+    member = nextcord.utils.get(guild.members, name=csv_name.lower())
     if member is None:
         member = nextcord.utils.get(guild.members, nick=csv_name)
     if member is None:
