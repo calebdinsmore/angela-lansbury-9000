@@ -48,7 +48,11 @@ class SecretSantaCommands(commands.Cog):
     @santa_admin.subcommand(name='send-pairings', description='Send out pairings')
     async def send_pairings(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True, with_message=True)
-        await elf.send_recipient_embeds(self.bot, interaction.guild)
+        if Config().is_prod:
+            guild = self.bot.get_guild(BUMPERS_GUILD_ID)
+        else:
+            guild = interaction.guild
+        await elf.send_recipient_embeds(self.bot, guild)
         await interaction.send('Sent out recipient answers!')
 
     @santa_admin.subcommand(name='remind', description='Remind Santas to send gifts')
