@@ -3,6 +3,7 @@ from nextcord.ext import commands
 
 from bot.cogs.secret_santa import elf
 from bot.cogs.secret_santa.elf import MemberMatchError
+from bot.config import Config
 from bot.utils import messages
 from bot.utils.constants import TESTING_GUILD_ID, BUMPERS_GUILD_ID
 
@@ -29,10 +30,14 @@ class SecretSantaCommands(commands.Cog):
     async def generate(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True, with_message=True)
         try:
-            models = elf.build_models_from_csv(interaction.guild)
+            if Config().is_prod:
+                guild = self.bot.get_guild(BUMPERS_GUILD_ID)
+            else:
+                guild = interaction.guild
+            models = elf.build_models_from_csv(guild)
             pairings = elf.generate_pairings(models)
             elf.persist_pairings(pairings)
-            await interaction.send('Pairings generated.', ephemeral=True)
+            await interaction.send(embed=elf.pairings_embed(), ephemeral=True)
         except MemberMatchError as e:
             await interaction.send(f'Failed to find users for the following usernames:\n{e.failures}')
         except AssertionError as e:

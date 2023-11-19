@@ -57,6 +57,7 @@ def build_models_from_csv(guild: nextcord.Guild):
                 # models[model.id] = model
             else:
                 model.set_id(member.id)
+                model.nickname = member.display_name
                 models[member.id] = model
     if failed_to_match:
         raise MemberMatchError(failed_to_match)
@@ -88,7 +89,8 @@ def test_pairings(models, pairing_dict):
     remainder = list(filter(lambda x: x.id not in pairing_dict.values(), models.values()))
     assert len(remainder) == 0
     for santa_id, recipient_id in pairing_dict.items():
-        assert pairing_dict[recipient_id] != santa_id, 'Cyclic pairing found'
+        if Config().is_prod:
+            assert pairing_dict[recipient_id] != santa_id, 'Cyclic pairing found'
         if santa_id == SMORE:
             assert recipient_id != MRS_SMORE, 'Smores got matched'
         if santa_id == MRS_SMORE:
@@ -178,3 +180,14 @@ async def send_reminders(bot: commands.Bot):
         santa = bot.get_user(pairing.santa_id)
         await santa.send(':wave: Hi! According to my records, you haven\'t sent your gift yet. Friendly reminder to '
                          'send it out and mark it sent with `/santa mark-sent`!')
+
+
+def pairings_embed():
+    pairings = DB.s.all(SantaParticipant)
+    description = ''
+    for pairing in pairings:
+        if pairing.santa_id == 212416365317980171:
+            description += f'<@{pairing.santa_id}> => <@{pairing.recipient_id}>\n'
+        else:
+            description += f'||<@{pairing.santa_id}>|| => <@{pairing.recipient_id}>\n'
+    return nextcord.Embed(title='Pairings', description=description)

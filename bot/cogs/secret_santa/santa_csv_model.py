@@ -3,6 +3,7 @@ import nextcord
 
 class SantaCsvModel:
     def __init__(self, dict_row: dict):
+        self._nickname = None
         self.dont_match = dict_row.get('NoMatch', '').split(',')
         self.dont_match = [int(i) if i else None for i in self.dont_match]
         self.dont_match = list(filter(lambda x: x is not None, self.dont_match))
@@ -28,6 +29,14 @@ class SantaCsvModel:
         return self.dict_row.get('Country')
 
     @property
+    def nickname(self):
+        return self._nickname
+
+    @nickname.setter
+    def nickname(self, nickname: str):
+        self._nickname = nickname
+
+    @property
     def answers_embed(self):
         excluded_headers = {
             'Timestamp',
@@ -38,7 +47,8 @@ class SantaCsvModel:
             'Are you willing/able to ship internationally if necessary?',
             'Would you like to participate in Secret Santa, a Christmas Card exchange, or both?',
         }
-        embed = nextcord.Embed(title=f'Your recipient: {self.dict_row.get("What is your discord username?")}',
+        embed = nextcord.Embed(title=f'Your recipient: {self.dict_row.get("What is your discord username?")} '
+                                     f'({self.nickname})',
                                description=f'Here are the questions and answers submitted by your gift recipient!')
         for question, answer in self.dict_row.items():
             if question in excluded_headers or not answer:
