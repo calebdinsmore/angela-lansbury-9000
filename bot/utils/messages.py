@@ -23,3 +23,11 @@ def error(message: str):
 
 def success(message: str):
     return nextcord.Embed(color=SUCCESS_COLOR, description=message)
+
+
+def santa_message(message: str, sender: nextcord.User, show_name=False):
+    embed = nextcord.Embed(description=message)
+    name = sender.name if show_name else 'Your Santa'
+    icon_url = sender.avatar.url if sender.avatar and show_name else None
+    embed.set_author(name=name, icon_url=icon_url)
+    return embed
