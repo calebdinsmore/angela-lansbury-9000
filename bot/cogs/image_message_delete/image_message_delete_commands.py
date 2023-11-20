@@ -66,7 +66,7 @@ class ImageMessageDeleteCommands(commands.Cog):
 
     @image_deleter.subcommand(name='retry', description='Retry failed image deletions.')
     async def retry(self, interaction: Interaction, delete_failures: bool = SlashOption(name='delete-failures')):
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         retry_results: List[str] = []
         failed_messages: List[ImageMessageToDelete] = DB.s.execute(
             sa.select(ImageMessageToDelete)
