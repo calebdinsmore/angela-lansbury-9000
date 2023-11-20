@@ -1,5 +1,6 @@
 import datetime as dt
 import nextcord
+import sentry_sdk
 
 from bot.utils.messages import message_has_image
 from bot.views.delete_image import DeleteImage
@@ -10,10 +11,14 @@ async def image_message_handler(message: nextcord.Message):
     if not message_has_image(message):
         return
     view = DeleteImage()
-    prompt = await message.reply('📸 I noticed you sent an image/video. Want me to delete it after a number of days?',
-                                 view=view)
-    await view.wait()
-    await prompt.delete()
+    try:
+        prompt = await message.reply(
+            '📸 I noticed you sent an image/video. Want me to delete it after a number of days?',
+            view=view)
+        await view.wait()
+        await prompt.delete()
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
     if view.value is not None:
         mark_image_for_deletion(message, view.value)
 
