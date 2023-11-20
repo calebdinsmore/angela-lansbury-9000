@@ -79,7 +79,7 @@ class SecretSantaCommands(commands.Cog):
                                                          description='Who to send this message to.',
                                                          choices=['Your Santa', 'Your Gift Recipient']),
                             message: str = SlashOption(name='message', description='The message you want to send.')):
-        if interaction.guild_id not in [BUMPERS_GUILD_ID, TESTING_GUILD_ID]:
+        if interaction.guild is not None and interaction.guild_id not in [BUMPERS_GUILD_ID, TESTING_GUILD_ID]:
             return await interaction.send(embed=messages.error('Secret Santa is unsupported in this server.'))
         await elf.handle_santa_message(self.bot, interaction, recipient, message)
 
@@ -88,7 +88,7 @@ class SecretSantaCommands(commands.Cog):
                         tracking_info: str = SlashOption(name='tracking-info',
                                                          description='Tracking info to give your '
                                                                      'recipient.')):
-        if interaction.guild_id not in [BUMPERS_GUILD_ID, TESTING_GUILD_ID]:
+        if interaction.guild is not None and interaction.guild_id not in [BUMPERS_GUILD_ID, TESTING_GUILD_ID]:
             return await interaction.send(embed=messages.error('Secret Santa is unsupported in this server.'))
         ephemeral = interaction.guild is not None
         await elf.mark_sent(self.bot, interaction.user.id, tracking_info)
