@@ -17,6 +17,9 @@ async def image_message_handler(message: nextcord.Message):
             view=view)
         await view.wait()
         await prompt.delete()
+    except nextcord.Forbidden:
+        sentry_sdk.capture_message(f'Got Forbidden error for channel [{message.channel.name}] '
+                                   f'in guild [{message.guild.name}]')
     except Exception as e:
         sentry_sdk.capture_exception(e)
     if view.value is not None:
