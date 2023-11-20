@@ -114,6 +114,7 @@ def clear_pairings():
 
 async def handle_santa_message(bot: commands.Bot, interaction: Interaction, recipient_choice: str, message: str):
     ephemeral = interaction.guild is not None
+    await interaction.response.defer(ephemeral=ephemeral, with_message=True)
     if recipient_choice not in ['Your Santa', 'Your Gift Recipient']:
         return await interaction.send(embed=messages.error('Invalid recipient choice.'))
     if recipient_choice == 'Your Santa':
