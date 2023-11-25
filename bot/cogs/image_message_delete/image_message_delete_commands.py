@@ -37,10 +37,10 @@ class ImageMessageDeleteCommands(commands.Cog):
         ).scalars().all()
         for db_message_to_delete in expired_messages:
             guild = self.bot.get_guild(db_message_to_delete.guild_id)
-            channel = guild.get_channel(db_message_to_delete.channel_id)
-            if not channel:
-                channel = await self.bot.fetch_channel(db_message_to_delete.channel_id)
             try:
+                channel = guild.get_channel(db_message_to_delete.channel_id)
+                if not channel:
+                    channel = await self.bot.fetch_channel(db_message_to_delete.channel_id)
                 message = await channel.fetch_message(db_message_to_delete.message_id)
                 await message.delete()
                 DB.s.delete(db_message_to_delete)
