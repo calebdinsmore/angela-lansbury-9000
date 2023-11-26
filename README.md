@@ -1,6 +1,6 @@
-# October Bumpers Bot
+# Angela Lansbury 9000
 
-For the bot's command reference, go to the [Wiki](https://github.com/calebdinsmore/october-bumpers-bot/wiki).
+For the bot's command reference, go to the [Wiki](https://github.com/calebdinsmore/angela-lansbury-9000/wiki).
 
 ## Setup
 
