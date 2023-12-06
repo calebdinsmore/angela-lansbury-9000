@@ -36,7 +36,11 @@ class AutoDeleteCommands(commands.Cog):
         configs: List[AutoDeleteChannelConfig] = DB.s.all(AutoDeleteChannelConfig)
         for config in configs:
             guild = self.bot.get_guild(config.guild_id)
+            if guild is None:
+                remove_config_and_report(config, f'Guild not found for config {config}')
             channel: nextcord.TextChannel = guild.get_channel(config.channel_id)
+            if channel is None:
+                remove_config_and_report(config, f'Channel not found for config {config} and guild {guild}')
             try:
                 anchor_message = await auto_delete_helper.fetch_anchor_message(channel, config)
             except nextcord.NotFound:
@@ -44,10 +48,13 @@ class AutoDeleteCommands(commands.Cog):
                                                         'Please reconfigure auto-delete in this channel.'))
                 auto_delete_helper.remove_channel_config(config.guild_id, config.channel_id)
                 continue
-            all_messages = await channel.history(after=anchor_message).flatten()
-            stale_messages = auto_delete_helper.get_stale_messages(all_messages, config)
-            for m in stale_messages:
-                await m.delete()
+            try:
+                all_messages = await channel.history(after=anchor_message, limit=10).flatten()
+                stale_messages = auto_delete_helper.get_stale_messages(all_messages, config)
+                for m in stale_messages:
+                    await m.delete()
+            except nextcord.Forbidden:
+                sentry_sdk.capture_message(f'Unable to delete messages in channel {channel.name} ({guild.name})')
 
     @check_for_stale_messages.error
     async def check_for_stale_messages_error(self, e):
@@ -55,8 +62,7 @@ class AutoDeleteCommands(commands.Cog):
         await asyncio.sleep(60)
         self.check_for_stale_messages.restart()
 
-    @slash_command(name='auto-delete', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID],
-                   default_member_permissions=Permissions(manage_guild=True))
+    @slash_command(name='channel-auto-delete', default_member_permissions=Permissions(manage_guild=True))
     async def auto_delete(self, interaction: Interaction):
         """
         This is the command prefix for the following sub-commands enumerated below.
@@ -69,10 +75,14 @@ class AutoDeleteCommands(commands.Cog):
                      delete: str = SlashOption(description='Types of messages to delete',
                                                choices=AutoDeleteType.list()),
                      delete_after: int = SlashOption(description='Delay before deleting messages, in MINUTES')):
+        try:
+            minutes_string = convert_minutes_to_human_readable(delete_after)
+        except ValueError as e:
+            return await interaction.send(embed=messages.error(str(e)))
         await interaction.send(embed=messages.success(f'{delete.title()} messages in this channel '
                                                       f'posted after this message will be deleted '
-                                                      f'after {delete_after} minutes.\n\n'
-                                                      f"(**Don't** delete this message. This bot uses "
+                                                      f'after {minutes_string}.\n\n'
+                                                      f"(**Don't** delete this message. I use "
                                                       f"it to anchor searches against this channel's history.)"))
         message = await interaction.original_message()
         current_config: AutoDeleteChannelConfig = DB.s.first(AutoDeleteChannelConfig,
@@ -101,3 +111,31 @@ class AutoDeleteCommands(commands.Cog):
             return await interaction.send(
                 embed=messages.error("This channel isn't configured to auto-delete messages."))
         await interaction.send(embed=messages.success('Stopped auto-deletions in this channel.'))
+
+
+def remove_config_and_report(config: AutoDeleteChannelConfig, message: str):
+    DB.s.remove(config)
+    DB.s.commit()
+    sentry_sdk.capture_message(message)
+
+
+def convert_minutes_to_human_readable(minutes):
+    if not isinstance(minutes, int):
+        raise ValueError("delete_after must be an integer.")
+
+    if minutes < 0:
+        raise ValueError("delete_after must be non-negative.")
+
+    if minutes < 60:
+        return f"{minutes} minute{'s' if minutes != 1 else ''}"
+
+    hours = minutes // 60
+    remaining_minutes = minutes % 60
+
+    if hours < 24:
+        return f"{hours} hour{'s' if hours != 1 else ''} and {remaining_minutes} minute{'s' if remaining_minutes != 1 else ''}"
+
+    days = hours // 24
+    remaining_hours = hours % 24
+
+    return f"{days} day{'s' if days != 1 else ''}, {remaining_hours} hour{'s' if remaining_hours != 1 else ''}, and {remaining_minutes} minute{'s' if remaining_minutes != 1 else ''}"
