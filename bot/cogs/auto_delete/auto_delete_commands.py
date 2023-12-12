@@ -16,7 +16,6 @@ from nextcord.ext import commands, tasks
 
 from bot.cogs.auto_delete import auto_delete_helper
 from bot.utils import messages
-from bot.utils.constants import TESTING_GUILD_ID, BUMPERS_GUILD_ID
 from db import AutoDeleteType, DB, AutoDeleteChannelConfig
 
 
@@ -75,20 +74,24 @@ class AutoDeleteCommands(commands.Cog):
                      delete: str = SlashOption(description='Types of messages to delete',
                                                choices=AutoDeleteType.list()),
                      delete_after: int = SlashOption(description='Delay before deleting messages, in MINUTES')):
+        if not isinstance(interaction.channel, nextcord.TextChannel):
+            return await interaction.send(embed=messages.error('This command can only be used in a server\'s text '
+                                                               'channel.'))
         try:
             minutes_string = convert_minutes_to_human_readable(delete_after)
         except ValueError as e:
             return await interaction.send(embed=messages.error(str(e)))
-        await interaction.send(embed=messages.success(f'{delete.title()} messages in this channel '
-                                                      f'posted after this message will be deleted '
-                                                      f'after {minutes_string}.\n\n'
-                                                      f"(**Don't** delete this message. I use "
-                                                      f"it to anchor searches against this channel's history.)"))
-        message = await interaction.original_message()
+        embed = messages.success(f'{delete.title()} messages in this channel '
+                                 f'posted after this message will be deleted '
+                                 f'after {minutes_string}.\n\n'
+                                 f"(**Don't** delete this message. I use "
+                                 f"it to anchor searches against this channel's history.)")
         current_config: AutoDeleteChannelConfig = DB.s.first(AutoDeleteChannelConfig,
                                                              guild_id=interaction.guild_id,
                                                              channel_id=interaction.channel_id)
         if current_config is None:
+            await interaction.send(embed=embed)
+            message = await interaction.original_message()
             current_config = AutoDeleteChannelConfig(guild_id=interaction.guild_id,
                                                      channel_id=interaction.channel_id,
                                                      auto_delete_type=delete,
@@ -97,10 +100,18 @@ class AutoDeleteCommands(commands.Cog):
                                                      original_anchor_message=message.id)
             DB.s.add(current_config)
         else:
+            message = await interaction.channel.fetch_message(current_config.original_anchor_message)
+            if message is None:
+                await interaction.send(embed=embed)
+                message = await interaction.original_message()
+                current_config.original_anchor_message = message.id
+            else:
+                await message.edit(embed=embed)
+                await interaction.send(embed=messages.success(f'Modified existing channel config. {message.jump_url}'),
+                                       ephemeral=True)
             current_config.auto_delete_type = delete
             current_config.delete_after_minutes = delete_after
             current_config.anchor_message = message.id
-            current_config.original_anchor_message = message.id
         DB.s.commit()
 
     @auto_delete.subcommand(description='Stop auto-deletion in this channel.')
