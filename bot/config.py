@@ -6,4 +6,4 @@ class Config:
 
     @property
     def is_prod(self):
-        return os.getenv('ENV', 'PROD') == 'PROD'
+        return os.getenv('ENV', 'DEV') == 'PROD'
