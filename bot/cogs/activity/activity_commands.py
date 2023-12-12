@@ -32,6 +32,11 @@ class ActivityCommands(commands.Cog):
             if user_activity is None:
                 user_activity_helper.setup_user(user_id, guild_id)
                 continue
+            if member is None:
+                get_logger(LoggingLevel.GENERAL).log(f'{guild.name}: {user_id} left server. Marking inactive.')
+                user_activity.is_active = False
+                DB.s.commit()
+                continue
             if nextcord.utils.get(member.roles, id=settings.model.break_role_id):
                 if rolling_message_log_helper.user_in_sixty_day_inactives(user_id,guild_id) and not user_activity.sent_sixty_day_notice:
                     await logger.log(f'⚠️ {member.mention} has been inactive for at least 60 days.')

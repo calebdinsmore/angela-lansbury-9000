@@ -19,7 +19,7 @@ def get_inactive_users() -> List[Tuple[int, int]]:
         SELECT author_id, rml.guild_id
         FROM rolling_message_log rml
         INNER JOIN user_activity ua on ua.user_id = rml.author_id 
-        WHERE sent_at >= date('now', '-1 month') and ua.tracking_started_on <= date('now', '-1 month')
+        WHERE ua.is_active and sent_at >= date('now', '-1 month') and ua.tracking_started_on <= date('now', '-1 month')
         GROUP BY author_id, rml.guild_id
         HAVING COUNT(*) < 5;
         """)
