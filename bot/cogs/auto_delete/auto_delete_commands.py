@@ -24,7 +24,7 @@ class AutoDeleteCommands(commands.Cog):
         self.bot = bot
         self.check_for_stale_messages.start()
 
-    @tasks.loop(seconds=30)
+    @tasks.loop(seconds=60)
     async def check_for_stale_messages(self):
         """
         This is the loop handler that periodically (every 30s) checks if any configured channels have stale messages
