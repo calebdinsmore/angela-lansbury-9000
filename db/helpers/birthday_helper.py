@@ -17,14 +17,11 @@ def add_birthday(guild_id: int, user_id: int, name: str, month: int, day: int, y
         return False
 
 def list_birthdays(guild_id: int, user_id: int):
-    results = DB.s.execute(
-        sa.text("""
-        SELECT name, month, day, year
-        FROM birthdays
-        WHERE guild_id = :guild_id AND user_id = :user_id
-        """)
+    return DB.s.execute(
+        sa.select(Birthday)
+        .where(Birthday.guild_id)
+        .where(Birthday.user_id == user_id)
     ).all()
-    return [(r[0], r[1], r[2], r[3]) for r in results]
 
 def delete_birthday(guild_id: int, user_id: int, name: str):
     DB.s.execute(
