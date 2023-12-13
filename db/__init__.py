@@ -11,5 +11,6 @@ from db.model.image_message_to_delete import *
 from db.model.rolling_message_log import *
 from db.model.user_activity import *
 from db.model.santa_participant import *
+from db.model.birthday import *
 
 alembic = Alembic(DB, 'db/migrations')
