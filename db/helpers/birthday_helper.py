@@ -19,13 +19,20 @@ def add_birthday(guild_id: int, user_id: int, name: str, month: int, day: int, y
 def list_birthdays(guild_id: int, user_id: int):
     return DB.s.execute(
         sa.select(Birthday)
-        .where(Birthday.guild_id)
+        .where(Birthday.guild_id == guild_id)
         .where(Birthday.user_id == user_id)
     ).all()
 
 def delete_birthday(guild_id: int, user_id: int, name: str):
-    DB.s.execute(
-        sa.delete(Birthday)
-        .where(Birthday.guild_id == guild_id and Birthday.user_id == user_id and Birthday.name == name)
-    )
-    DB.s.commit()
+    try:
+        DB.s.execute(
+            sa.delete(Birthday)
+            .where(Birthday.guild_id == guild_id)
+            .where(Birthday.user_id == user_id)
+            .where(Birthday.name == name)
+        )
+        DB.s.commit()
+        return True
+    except:
+        DB.s.rollback()
+        return False

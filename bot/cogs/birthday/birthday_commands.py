@@ -6,7 +6,7 @@ from nextcord.ext import commands
 from bot.config import Config
 from bot.utils import messages
 from bot.utils.constants import TESTING_GUILD_ID, BUMPERS_GUILD_ID
-from db.helpers.birthday_helper import add_birthday, list_birthdays
+from db.helpers.birthday_helper import add_birthday, list_birthdays, delete_birthday
 
 
 class BirthdayCommands(commands.Cog):
@@ -59,7 +59,7 @@ class BirthdayCommands(commands.Cog):
                                 user: Member = SlashOption(name='user',
                                                                 description='User to remove birthday for.'),
                                 name: str = SlashOption(name='name', description='Name of birthday to remove')):
-        if interaction.guild is not None and interaction.guild_id not in [BUMPERS_GUILD_ID, TESTING_GUILD_ID]:
-            return await interaction.send(embed=messages.error('Birthday tracking is unsupported in this server.'))
-        print(user)
-        await interaction.send('Not implemented yet.')
+        success = delete_birthday(interaction.guild_id, user.id, name.lower())
+        if not success:
+            return await interaction.send(f'An error occurred when deleting birthday {name.title()} associated with user {user.name}.')
+        await interaction.send('Successfully deleted birthday!')
