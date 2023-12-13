@@ -1,9 +1,12 @@
+from datetime import datetime
+
 from nextcord import slash_command, Interaction, SlashOption, Permissions, Member
 from nextcord.ext import commands
 
 from bot.config import Config
 from bot.utils import messages
 from bot.utils.constants import TESTING_GUILD_ID, BUMPERS_GUILD_ID
+from db.helpers.birthday_helper import add_birthday
 
 
 class BirthdayCommands(commands.Cog):
@@ -24,8 +27,13 @@ class BirthdayCommands(commands.Cog):
                             date: str = SlashOption(name='date', description='Date of birthday (MM/DD/YYYY)')):
         if interaction.guild is not None and interaction.guild_id not in [BUMPERS_GUILD_ID, TESTING_GUILD_ID]:
             return await interaction.send(embed=messages.error('Birthday tracking is unsupported in this server.'))
-        print(user, name, date)
-        await interaction.send('Not implemented yet.')
+        # Get date from added date, TODO: add validation
+        dt = datetime.strptime(date, '%m/%d/%Y')
+        success = add_birthday(user.id, interaction.guild_id, name, dt.month, dt.day, dt.year)
+        if success:
+            await interaction.send('Birthday added.')
+        else:
+            await interaction.send(f'Birthday already exists for {name}. Try a different name, or remove the existing birthday first.')
 
     @birthday.subcommand(name='list', description='List birthdays')
     async def birthday_list(self, interaction: Interaction,
@@ -40,7 +48,7 @@ class BirthdayCommands(commands.Cog):
     async def birthday_remove(self, interaction: Interaction,
                                 user: Member = SlashOption(name='user',
                                                                 description='User to remove birthday for.'),
-                                number: int = SlashOption(name='number', description='Number of birthday to remove')):
+                                name: str = SlashOption(name='name', description='Name of birthday to remove')):
         if interaction.guild is not None and interaction.guild_id not in [BUMPERS_GUILD_ID, TESTING_GUILD_ID]:
             return await interaction.send(embed=messages.error('Birthday tracking is unsupported in this server.'))
         print(user)
