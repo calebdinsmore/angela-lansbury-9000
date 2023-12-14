@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, time
 import asyncio
 
 from nextcord import slash_command, Interaction, SlashOption, Permissions, Member, TextChannel
@@ -9,33 +9,51 @@ from bot.utils import messages
 from bot.utils.constants import TESTING_GUILD_ID, BUMPERS_GUILD_ID
 from db.helpers import birthday_helper
 
-
 class BirthdayCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.post_birthdays.start()
     
-    @tasks.loop(seconds=10)
+    # Every day at 9AM Pacific Time
+    @tasks.loop(time=time(hour=17, minute=0, second=0, tzinfo=timezone.utc))
     async def post_birthdays(self):
         if not self.bot.is_ready():
             return
 
         birthdays = birthday_helper.get_todays_birthdays()
-        print("Todays birthdays:", birthdays)
         current_guild_id = None
         birthday_channel_id = None
+        message = None
+        guild = None
         for birthday in birthdays:
             if birthday.guild_id != current_guild_id:
+                if message is not None and birthday_channel_id is not None:
+                    message = messages.get_special_birthday_fields(message)
+                    channel = self.bot.get_channel(birthday_channel_id)
+                    await channel.send(embed=message)
+                    message = None
+                guild = self.bot.get_guild(birthday.guild_id)
+                if guild is None:
+                    continue
                 current_guild_id = birthday.guild_id
                 birthday_channel_id = birthday_helper.get_birthday_channel_id(current_guild_id)
-                if birthday_channel_id is not None: 
-                    channel = self.bot.get_channel(birthday_channel_id)
-                    await channel.send(f'Todays birthdays: {birthday.name}')
+                if birthday_channel_id is None:
+                    continue
+                message = messages.birthday_message()
+                member = guild.get_member(birthday.user_id)
+                message = messages.birthday_entry(message, birthday, member)
+            else:
+                member = guild.get_member(birthday.user_id)
+                message = messages.birthday_entry(message, birthday, member)
+        if message is not None and birthday_channel_id is not None: 
+            message = messages.get_special_birthday_fields(message)
+            channel = self.bot.get_channel(birthday_channel_id)
+            await channel.send(embed=message)
+
 
     @post_birthdays.error
     async def post_birthdays_error(self, e):
-        print('Error in post_birthdays')
-        # sentry_sdk.capture_exception(e)
+        sentry_sdk.capture_exception(e)
         await asyncio.sleep(60)
         self.post_birthdays.restart()
 
