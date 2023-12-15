@@ -79,5 +79,4 @@ def get_todays_birthdays() -> List[Birthday]:
     birthdays = {guild_id: [] for guild_id in set([birthday.guild_id for birthday in queried_birthdays])}
     for birthday in queried_birthdays:
         birthdays[birthday.guild_id].append(birthday)
-    print(birthdays)
     return birthdays
