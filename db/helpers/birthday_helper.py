@@ -67,7 +67,7 @@ def get_todays_birthdays() -> List[Birthday]:
     :return: array of guild_ids with an array of Birthdays
     """
     now = dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc)
-    return DB.s.execute(
+    queried_birthdays = DB.s.execute(
         sa.text(f"""
         SELECT *
         FROM birthdays
@@ -75,3 +75,9 @@ def get_todays_birthdays() -> List[Birthday]:
         ORDER BY guild_id desc;
         """)
     ).all()
+    # make hashmap of guild_id -> [birthdays]
+    birthdays = {guild_id: [] for guild_id in set([birthday.guild_id for birthday in queried_birthdays])}
+    for birthday in queried_birthdays:
+        birthdays[birthday.guild_id].append(birthday)
+    print(birthdays)
+    return birthdays

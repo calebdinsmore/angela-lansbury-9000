@@ -20,39 +20,31 @@ class BirthdayCommands(commands.Cog):
         if not self.bot.is_ready():
             return
 
-        birthdays = birthday_helper.get_todays_birthdays()
-        current_guild_id = None
-        birthday_channel_id = None
-        message = None
-        guild = None
-        for birthday in birthdays:
-            if birthday.guild_id != current_guild_id:
-                if message is not None and birthday_channel_id is not None:
-                    message = messages.get_special_birthday_fields(message)
-                    channel = self.bot.get_channel(birthday_channel_id)
-                    await channel.send(embed=message)
-                    message = None
-                guild = self.bot.get_guild(birthday.guild_id)
-                if guild is None:
-                    continue
-                current_guild_id = birthday.guild_id
-                birthday_channel_id = birthday_helper.get_birthday_channel_id(current_guild_id)
-                if birthday_channel_id is None:
-                    continue
-                message = messages.birthday_message()
-                member = guild.get_member(birthday.user_id)
-                message = messages.birthday_entry(message, birthday, member)
-            else:
-                member = guild.get_member(birthday.user_id)
-                message = messages.birthday_entry(message, birthday, member)
-        if message is not None and birthday_channel_id is not None: 
-            message = messages.get_special_birthday_fields(message)
+        birthdays_by_guild_id = birthday_helper.get_todays_birthdays()
+        for guild_id, birthdays in birthdays_by_guild_id.items():
+            guild = self.bot.get_guild(guild_id)
+            if guild is None:
+                # Can't find guild, skip posting these birthdays
+                continue
+            birthday_channel_id = birthday_helper.get_birthday_channel_id(guild_id)
+            if birthday_channel_id is None:
+                # No birthday channel set, skip posting these birthdays
+                continue
             channel = self.bot.get_channel(birthday_channel_id)
+            if channel is None:
+                # Can't find channel, skip posting these birthdays
+                continue
+            # Assemble birthday message
+            message = messages.birthday_message()
+            for birthday in birthdays:
+                member = guild.get_member(birthday.user_id)
+                message = messages.birthday_entry(message, birthday, member)
+            message = messages.get_special_birthday_fields(message)
             await channel.send(embed=message)
-
 
     @post_birthdays.error
     async def post_birthdays_error(self, e):
+        print(e)
         sentry_sdk.capture_exception(e)
         await asyncio.sleep(60)
         self.post_birthdays.restart()
