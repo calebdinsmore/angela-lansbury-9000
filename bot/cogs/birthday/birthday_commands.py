@@ -64,16 +64,12 @@ class BirthdayCommands(commands.Cog):
 
     @birthday.subcommand(name='add', description='Add a birthday')
     async def birthday_add(self, interaction: Interaction,
-                            user: Member = SlashOption(name='user',
-                                                         description='User to add birthday for.'),
                             name: str = SlashOption(name='name', description='Name of person celebrating a birthday'),
                             date: str = SlashOption(name='date', description='Date of birthday (MM/DD/YYYY)')):
-        if interaction.guild is not None and interaction.guild_id not in [BUMPERS_GUILD_ID, TESTING_GUILD_ID]:
-            return await interaction.send(embed=messages.error('Birthday tracking is unsupported in this server.'))
         # Get date from added date, validate, and add to the database. Return an error if the name already exists or the date is invalid.
         try:
             dt = datetime.strptime(date, '%m/%d/%Y')
-            success = birthday_helper.add_birthday(interaction.guild_id, user.id, name.lower(), dt.month, dt.day, dt.year)
+            success = birthday_helper.add_birthday(interaction.guild_id, interaction.user.id, name.lower(), dt.month, dt.day, dt.year)
             if success:
                 await interaction.send('Birthday added.')
             else:
@@ -100,10 +96,8 @@ class BirthdayCommands(commands.Cog):
 
     @birthday.subcommand(name='remove', description='Remove a birthday')
     async def birthday_remove(self, interaction: Interaction,
-                                user: Member = SlashOption(name='user',
-                                                                description='User to remove birthday for.'),
                                 name: str = SlashOption(name='name', description='Name of birthday to remove')):
-        success = birthday_helper.delete_birthday(interaction.guild_id, user.id, name.lower())
+        success = birthday_helper.delete_birthday(interaction.guild_id, interaction.user.id, name.lower())
         if not success:
             return await interaction.send(f'An error occurred when deleting birthday {name.title()} associated with user {user.name}.')
         await interaction.send('Successfully deleted birthday!')
