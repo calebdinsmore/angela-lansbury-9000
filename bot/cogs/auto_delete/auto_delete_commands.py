@@ -16,6 +16,7 @@ from nextcord.ext import commands, tasks
 
 from bot.cogs.auto_delete import auto_delete_helper
 from bot.utils import messages
+from bot.utils.bot_utils import get_or_fetch_guild, get_or_fetch_channel
 from db import AutoDeleteType, DB, AutoDeleteChannelConfig
 
 
@@ -34,12 +35,14 @@ class AutoDeleteCommands(commands.Cog):
             return
         configs: List[AutoDeleteChannelConfig] = DB.s.all(AutoDeleteChannelConfig)
         for config in configs:
-            guild = self.bot.get_guild(config.guild_id)
+            guild = await get_or_fetch_guild(self.bot, config.guild_id)
             if guild is None:
                 remove_config_and_report(config, f'Guild not found for config {config}')
-            channel: nextcord.TextChannel = guild.get_channel(config.channel_id)
+                continue
+            channel: nextcord.TextChannel = await get_or_fetch_channel(self.bot, config.channel_id)
             if channel is None:
                 remove_config_and_report(config, f'Channel not found for config {config} and guild {guild}')
+                continue
             try:
                 anchor_message = await auto_delete_helper.fetch_anchor_message(channel, config)
             except nextcord.NotFound:
@@ -125,7 +128,7 @@ class AutoDeleteCommands(commands.Cog):
 
 
 def remove_config_and_report(config: AutoDeleteChannelConfig, message: str):
-    DB.s.remove(config)
+    DB.s.delete(config)
     DB.s.commit()
     sentry_sdk.capture_message(message)
 
