@@ -14,8 +14,8 @@ class BirthdayCommands(commands.Cog):
         self.bot = bot
         self.post_birthdays.start()
     
-    # Every day at 9AM Pacific Time
-    @tasks.loop(time=time(hour=17, minute=0, second=0, tzinfo=timezone.utc))
+    # Every day at 5AM Pacific Time
+    @tasks.loop(time=time(hour=12, minute=0, second=0, tzinfo=timezone.utc))
     async def post_birthdays(self):
         if not self.bot.is_ready():
             return
@@ -48,6 +48,28 @@ class BirthdayCommands(commands.Cog):
         sentry_sdk.capture_exception(e)
         await asyncio.sleep(60)
         self.post_birthdays.restart()
+
+    ##############################
+    # Admin Slash Commands
+    ##############################
+
+    @slash_command(name='birthday-admin',
+                   description='Birthday commands')
+    async def birthday_admin(self, interaction: Interaction):
+        pass
+
+    @birthday_admin.subcommand(name='config', description='Configure birthday settings')
+    async def birthday_config(self, interaction: Interaction,
+                                channel: TextChannel = SlashOption(name='channel',
+                                                                description='Channel to post birthday messages in.')):
+        success = birthday_helper.update_settings(interaction.guild_id, channel.id)
+        if not success:
+            return await interaction.send(f'An error occurred when updating birthday settings.')
+        await interaction.send('Successfully updated birthday settings!')
+
+    ##############################
+    # Regular Slash Commands
+    ##############################
 
     @slash_command(name='birthday', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID],
                    description='Birthday commands')
@@ -93,12 +115,4 @@ class BirthdayCommands(commands.Cog):
         if not success:
             return await interaction.send(f'An error occurred when deleting birthday {name.title()} associated with user {user.name}.')
         await interaction.send('Successfully deleted birthday!')
-
-    @birthday.subcommand(name='config', description='Configure birthday settings')
-    async def birthday_config(self, interaction: Interaction,
-                                channel: TextChannel = SlashOption(name='channel',
-                                                                description='Channel to post birthday messages in.')):
-        success = birthday_helper.update_settings(interaction.guild_id, channel.id)
-        if not success:
-            return await interaction.send(f'An error occurred when updating birthday settings.')
-        await interaction.send('Successfully updated birthday settings!')
+        
