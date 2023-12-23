@@ -20,7 +20,7 @@ class ActivityCommands(commands.Cog):
     @tasks.loop(hours=24)
     async def check_for_inactives(self):
         if not self.bot.is_ready():
-            return
+            await self.bot.wait_until_ready()
 
         inactives = rolling_message_log_helper.get_inactive_users()
         for user_id, guild_id in inactives:

@@ -16,12 +16,18 @@ def get_inactive_users() -> List[Tuple[int, int]]:
     """
     results = DB.s.execute(
         sa.text("""
-        SELECT author_id, rml.guild_id
-        FROM rolling_message_log rml
-        INNER JOIN user_activity ua on ua.user_id = rml.author_id 
-        WHERE ua.is_active and sent_at >= date('now', '-1 month') and ua.tracking_started_on <= date('now', '-1 month')
-        GROUP BY author_id, rml.guild_id
-        HAVING COUNT(*) < 5;
+        SELECT ua.user_id , ua.guild_id
+        FROM user_activity ua
+        LEFT JOIN (
+            SELECT rml.author_id as author_id, COUNT(*) as message_count
+            FROM rolling_message_log rml
+            WHERE sent_at >= date('now', '-1 month')
+            GROUP BY rml.author_id
+        ) AS user_messages ON ua.user_id = user_messages.author_id
+        WHERE ua.is_active 
+        and ua.tracking_started_on <= date('now', '-1 month') 
+        and (user_messages.message_count < 5 
+            or user_messages.message_count IS NULL);
         """)
     ).all()
     return [(r[0], r[1]) for r in results]
@@ -30,12 +36,18 @@ def get_inactive_users() -> List[Tuple[int, int]]:
 def user_in_sixty_day_inactives(user_id: int, guild_id: int):
     results = DB.s.execute(
         sa.text("""
-            SELECT author_id, rml.guild_id
-            FROM rolling_message_log rml
-            INNER JOIN user_activity ua on ua.user_id = rml.author_id 
-            WHERE sent_at >= date('now', '-2 month') and ua.tracking_started_on <= date('now', '-2 month')
-            GROUP BY author_id, rml.guild_id
-            HAVING COUNT(*) < 5;
+            SELECT ua.user_id , ua.guild_id
+            FROM user_activity ua
+            LEFT JOIN (
+                SELECT rml.author_id as author_id, COUNT(*) as message_count
+                FROM rolling_message_log rml
+                WHERE sent_at >= date('now', '-2 month')
+                GROUP BY rml.author_id
+            ) AS user_messages ON ua.user_id = user_messages.author_id
+            WHERE ua.is_active 
+            and ua.tracking_started_on <= date('now', '-2 month') 
+            and (user_messages.message_count < 5 
+                or user_messages.message_count IS NULL);
             """)
     ).all()
     results = [(r[0], r[1]) for r in results]
