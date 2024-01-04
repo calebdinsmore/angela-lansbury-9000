@@ -1,7 +1,11 @@
-from typing import Dict
+from typing import Dict, List
 
 from db import DB
 from db.model.user_channel_settings import UserChannelSettings
+
+
+def get_all(guild_id: int, user_id: int) -> List[UserChannelSettings]:
+    return DB.s.all(UserChannelSettings, guild_id=guild_id, user_id=user_id)
 
 
 def get_user_channel_delete_settings(guild_id: int, channel_id: int, user_id: int):
