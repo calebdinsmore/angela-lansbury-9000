@@ -33,8 +33,8 @@ class ImageMessageDeleteCommands(commands.Cog):
         now = dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc)
         expired_messages: List[ImageMessageToDelete] = DB.s.execute(
             sa.select(ImageMessageToDelete)
-            .where(ImageMessageToDelete.delete_after < now)
-            .where(ImageMessageToDelete.has_failed == None)
+              .where(ImageMessageToDelete.delete_after < now)
+              .where(ImageMessageToDelete.has_failed == None)
         ).scalars().all()
         for db_message_to_delete in expired_messages:
             guild = self.bot.get_guild(db_message_to_delete.guild_id)
@@ -71,7 +71,7 @@ class ImageMessageDeleteCommands(commands.Cog):
         retry_results: List[str] = []
         failed_messages: List[ImageMessageToDelete] = DB.s.execute(
             sa.select(ImageMessageToDelete)
-            .where(ImageMessageToDelete.has_failed == True)
+              .where(ImageMessageToDelete.has_failed == True)
         ).scalars().all()
         deletions = 0
         failures = 0
@@ -98,17 +98,18 @@ class ImageMessageDeleteCommands(commands.Cog):
         if len(retry_results) == 0:
             result_message = 'No failed deletions found.'
         await interaction.send(embed=messages.success(result_message), ephemeral=True)
-    
+
     @slash_command(name='image-deleter-settings', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID])
     async def image_deleter_settings(self, interaction: Interaction):
         pass
 
-    @image_deleter_settings.subcommand(name='change', description='Change your settings for image deletion in a channel.')
+    @image_deleter_settings.subcommand(name='change',
+                                       description='Change your settings for image deletion in a channel.')
     async def change(self, interaction: Interaction, channel: TextChannel = SlashOption(name='channel',
-                                                                description='Channel to set settings for.'),
-                                                                delete_after: str = SlashOption(name='delete-after',
-                                                                description='How long to wait before deleting the message.', choices=[
-                                                                    '1d', '7d', '14d', '30d', 'keep'])):
+                                                                                        description='Channel to set settings for.'),
+                     delete_after: str = SlashOption(name='delete-after',
+                                                     description='How long to wait before deleting the message.',
+                                                     choices=['1d', '7d', '14d', '30d', 'keep'])):
         image_deletion_days = {
             '1d': 1,
             '7d': 7,
@@ -116,12 +117,15 @@ class ImageMessageDeleteCommands(commands.Cog):
             '30d': 30,
             'keep': 0
         }
-        image_message_helper.change_user_channel_delete_settings(interaction.guild.id, channel.id, interaction.user.id, image_deletion_days[delete_after])
-        await interaction.send(f"Setting your image deletion settings for channel **#{channel.name}** to **{delete_after}**", ephemeral=True)
-    
-    @image_deleter_settings.subcommand(name='reset', description='Remove your settings for image deletion in a channel.')
-    async def reset(self, interaction: Interaction, channel: TextChannel = SlashOption(name='channel',
-                                                                description='Channel to remove settings for.')):
-        image_message_helper.reset_user_channel_delete_settings(interaction.guild.id, channel.id, interaction.user.id)
-        await interaction.send(f"Removing image deletion settings for channel {channel.name}", ephemeral=True)
+        image_message_helper.change_user_channel_delete_settings(interaction.guild.id, channel.id, interaction.user.id,
+                                                                 image_deletion_days[delete_after])
+        await interaction.send(
+            f"Setting your image deletion settings for channel {channel.mention} to **{delete_after}**",
+            ephemeral=True)
 
+    @image_deleter_settings.subcommand(name='reset',
+                                       description='Remove your settings for image deletion in a channel.')
+    async def reset(self, interaction: Interaction, channel: TextChannel = SlashOption(name='channel',
+                                                                                       description='Channel to remove settings for.')):
+        image_message_helper.reset_user_channel_delete_settings(interaction.guild.id, channel.id, interaction.user.id)
+        await interaction.send(f"Removing image deletion settings for channel {channel.mention}.", ephemeral=True)
