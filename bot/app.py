@@ -33,7 +33,7 @@ else:
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=nextcord.Game(name='Mrs. Santa Claus'))
+    await bot.change_presence(activity=nextcord.CustomActivity(name='Ringing in the New Year 🎉'))
     print('Logged in as')
     print(bot.user.name)
     print(bot.user.id)
@@ -44,7 +44,6 @@ def run():
     bot.add_cog(AutoDeleteCommands(bot))
     bot.add_cog(ImageMessageDeleteCommands(bot))
     bot.add_cog(ActivityCommands(bot))
-    bot.add_cog(SecretSantaCommands(bot))
     bot.add_cog(BirthdayCommands(bot))
     bot.add_cog(AdminCommands(bot))
     logger.register_bot(bot)
