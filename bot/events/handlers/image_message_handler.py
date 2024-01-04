@@ -5,13 +5,30 @@ import sentry_sdk
 from bot.utils.messages import message_has_image
 from bot.views.delete_image import DeleteImage
 from db import ImageMessageToDelete, DB
+from db.helpers import image_message_helper, user_settings_helper
 
 
 async def image_message_handler(message: nextcord.Message):
+    if message.guild is None:
+        return
     if not message_has_image(message):
         return
     view = DeleteImage()
     try:
+        user_settings = user_settings_helper.get_user_settings(message.author.id, message.guild.id)
+        if not user_settings.image_deletion_prompts_enabled:
+            # user has disabled image prompts
+            return
+        user_channel_delete_settings = image_message_helper.get_user_channel_delete_settings(message.guild.id,
+                                                                                             message.channel.id,
+                                                                                             message.author.id)
+        if user_channel_delete_settings is not None:
+            # User has delete settings set for this channel, skip the prompt
+            if user_channel_delete_settings == 0:
+                # User channel delete settings are set to keep, ignore the prompt and don't set image to delete
+                return
+            mark_image_for_deletion(message, user_channel_delete_settings)
+            return
         prompt = await message.reply(
             '📸 I noticed you sent an image/video. Want me to delete it after a number of days?',
             view=view)
