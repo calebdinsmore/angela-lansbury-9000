@@ -126,8 +126,8 @@ class ImageMessageDeleteCommands(commands.Cog):
     @image_deleter_settings.subcommand(name='set-enabled',
                                        description='Enable/disable image deletion prompts for your images.')
     async def set_enabled(self, interaction: Interaction, enabled: str = SlashOption(name='enabled',
-                                                                                     choices=['Yes', 'No'])):
-        is_enabled = enabled == 'Yes'
+                                                                                     choices=['✅', '❌'])):
+        is_enabled = enabled == '✅'
         user_settings_helper.set_image_deletion_enabled(interaction.user.id, interaction.guild_id, is_enabled)
         confirmation_word = 'Enabled' if is_enabled else 'Disabled'
         note = '' if is_enabled else '\nAny images currently marked for deletion will still be deleted as scheduled.'
