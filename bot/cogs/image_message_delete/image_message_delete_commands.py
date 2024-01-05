@@ -99,7 +99,7 @@ class ImageMessageDeleteCommands(commands.Cog):
             result_message = 'No failed deletions found.'
         await interaction.send(embed=messages.success(result_message), ephemeral=True)
 
-    @slash_command(name='my-image-deletion', force_global=True)
+    @slash_command(name='image-prompts', force_global=True)
     async def image_deleter_settings(self, interaction: Interaction):
         pass
 
@@ -107,7 +107,7 @@ class ImageMessageDeleteCommands(commands.Cog):
     async def show_settings(self, interaction: Interaction):
         user_settings = user_settings_helper.get_user_settings(interaction.user.id, interaction.guild_id)
         all_channel_settings = image_message_helper.get_all(interaction.guild_id, interaction.user.id)
-        embed = nextcord.Embed()
+        embed = nextcord.Embed(title='Your Image Deletion Settings')
         embed.add_field(name='Enabled?', value='✅' if user_settings.image_deletion_prompts_enabled else '❌')
         channel_setting_strings = []
         for channel_setting in all_channel_settings:
@@ -131,10 +131,11 @@ class ImageMessageDeleteCommands(commands.Cog):
         user_settings_helper.set_image_deletion_enabled(interaction.user.id, interaction.guild_id, is_enabled)
         confirmation_word = 'Enabled' if is_enabled else 'Disabled'
         note = '' if is_enabled else '\nAny images currently marked for deletion will still be deleted as scheduled.'
-        await interaction.send(embed=messages.success(f'{confirmation_word} image prompts in this server.{note}'),
+        await interaction.send(embed=messages.success(f'{confirmation_word} image prompts for your messages in this '
+                                                      f'server.{note}'),
                                ephemeral=True)
 
-    @image_deleter_settings.subcommand(name='channel-default',
+    @image_deleter_settings.subcommand(name='add-channel-default',
                                        description='Change your settings for image deletion in a channel.')
     async def channel_default(self,
                               interaction: Interaction,
