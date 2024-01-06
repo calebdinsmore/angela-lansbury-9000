@@ -39,7 +39,7 @@ class AdminCommands(commands.Cog):
         if confirmation == 'Test':
             channel = self.bot.get_channel(interaction.channel_id)
             await interaction.send('Sending message as test.')
-            await channel.send(message)
+            await channel.send(message, suppress_embeds=True)
             await channel.send(f'Would have sent to the following owners: {[ o.name for o in owners_to_send_to ]}')
             return
 
