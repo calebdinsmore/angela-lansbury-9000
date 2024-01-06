@@ -51,7 +51,7 @@ class AdminCommands(commands.Cog):
                 if owner.id in sent_to:
                     continue
                 owner_name = owner.name
-                await owner.send(message)
+                await owner.send(message, suppress_embeds=True)
                 sent_to.add(owner.id)
         except Exception as e:
             sentry_sdk.capture_exception(e)
