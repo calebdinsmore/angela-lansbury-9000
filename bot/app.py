@@ -8,7 +8,7 @@ from bot.cogs.admin.admin_commands import AdminCommands
 from bot.cogs.secret_santa.secret_santa_commands import SecretSantaCommands
 from bot.cogs.birthday.birthday_commands import BirthdayCommands
 from bot.config import Config
-from bot.events import on_member_join_event, on_guild_join_event
+from bot.events import on_member_join_event, on_guild_join_event, on_member_update_event
 from bot.events.on_message_event import register_event
 from bot.utils import logger
 
@@ -49,6 +49,7 @@ def run():
     logger.register_bot(bot)
     on_member_join_event.register_event(bot)
     on_guild_join_event.register_event(bot)
+    on_member_update_event.register_event(bot)
     register_event(bot)
     bot.run(config.BOT_TOKEN)
 
