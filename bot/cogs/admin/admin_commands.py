@@ -3,13 +3,43 @@ import sentry_sdk
 from nextcord import slash_command, Interaction, SlashOption
 from nextcord.ext import commands
 
+from bot.events.handlers.temp_discussion_handler import REACTION_CHANNEL_ID, REACTION_MESSAGE_ID, ROLE_ID, \
+    REACTION_EMOJI
 from bot.utils import messages
-from bot.utils.constants import TESTING_GUILD_ID, ANGELA_TECH_SUPPORT_ID
+from bot.utils.constants import TESTING_GUILD_ID, ANGELA_TECH_SUPPORT_ID, BUMPERS_GUILD_ID
 
 
 class AdminCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    @slash_command(name='distribute-role',
+                   description='Initialize discussion role distribution',
+                   guild_ids=[BUMPERS_GUILD_ID])
+    async def distribute_role(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral=True)
+        try:
+            reaction_channel = await self.bot.fetch_channel(REACTION_CHANNEL_ID)
+            reaction_message = await reaction_channel.fetch_message(REACTION_MESSAGE_ID)
+            reactions = reaction_message.reactions
+            added = 0
+            for reaction in reactions:
+                if str(reaction.emoji) != REACTION_EMOJI:
+                    continue
+                async for user in reaction.users():
+                    if user.bot:
+                        continue
+                    member = interaction.guild.get_member(user.id)
+                    if member is None:
+                        continue
+                    role = nextcord.utils.get(interaction.guild.roles, id=ROLE_ID)
+                    if role is None:
+                        continue
+                    await member.add_roles(role)
+                    added += 1
+        except Exception as e:
+            return await interaction.send(f'Something went wrong: {e}', ephemeral=True)
+        await interaction.send(f'Added {added} roles.', ephemeral=True)
 
     @slash_command(name='summary',
                    description='Summary of guilds Angela has been added to.',

@@ -8,7 +8,8 @@ from bot.cogs.admin.admin_commands import AdminCommands
 from bot.cogs.birthday.birthday_commands import BirthdayCommands
 from bot.cogs.threads.threads_commands import ThreadsCommands
 from bot.config import Config
-from bot.events import on_member_join_event, on_guild_join_event
+from bot.events import on_member_join_event, on_guild_join_event, on_raw_reaction_add_event, \
+    on_raw_reaction_remove_event
 from bot.events.on_message_event import register_event
 from bot.utils import logger
 
@@ -50,6 +51,8 @@ def run():
     logger.register_bot(bot)
     on_member_join_event.register_event(bot)
     on_guild_join_event.register_event(bot)
+    on_raw_reaction_add_event.register_event(bot)
+    on_raw_reaction_remove_event.register_event(bot)
     register_event(bot)
     bot.run(config.BOT_TOKEN)
 
