@@ -10,4 +10,4 @@ def register_event(bot: commands.Bot):
         if member.bot:
             return
 
-        user_activity_helper.setup_user(member.id)
+        user_activity_helper.setup_user(member.id, member.guild.id)

@@ -4,6 +4,8 @@ A temporary handler specific to the October Bumpers Group
 import nextcord
 from nextcord.ext import commands
 
+from bot.utils.constants import BUMPERS_GUILD_ID
+
 REACTION_MESSAGE_ID = 1200285186483564634
 REACTION_CHANNEL_ID = 1199455065715527752
 REACTION_EMOJI = '👍'
@@ -11,6 +13,8 @@ ROLE_ID = 1200604278931333170
 
 
 async def handle_closure_react(bot: commands.Bot, payload: nextcord.RawReactionActionEvent):
+    if payload.guild_id != BUMPERS_GUILD_ID:
+        return
     if payload.message_id != REACTION_MESSAGE_ID:
         return
     if str(payload.emoji) != REACTION_EMOJI:
