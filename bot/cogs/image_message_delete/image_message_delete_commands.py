@@ -33,8 +33,8 @@ class ImageMessageDeleteCommands(commands.Cog):
         now = dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc)
         expired_messages: List[ImageMessageToDelete] = DB.s.execute(
             sa.select(ImageMessageToDelete)
-              .where(ImageMessageToDelete.delete_after < now)
-              .where(ImageMessageToDelete.has_failed == None)
+                .where(ImageMessageToDelete.delete_after < now)
+                .where(ImageMessageToDelete.has_failed == None)
         ).scalars().all()
         for db_message_to_delete in expired_messages:
             guild = self.bot.get_guild(db_message_to_delete.guild_id)
@@ -66,6 +66,8 @@ class ImageMessageDeleteCommands(commands.Cog):
 
     @image_deleter_settings.subcommand(name='show-settings', description='Show your image deletion settings.')
     async def show_settings(self, interaction: Interaction):
+        if not await self.check_enabled(interaction):
+            return
         user_settings = user_settings_helper.get_user_settings(interaction.user.id, interaction.guild_id)
         all_channel_settings = image_message_helper.get_all(interaction.guild_id, interaction.user.id)
         embed = nextcord.Embed(title='Your Image Deletion Settings',
@@ -90,6 +92,8 @@ class ImageMessageDeleteCommands(commands.Cog):
                                        description='Enable/disable image deletion prompts for your images.')
     async def set_enabled(self, interaction: Interaction, enabled: str = SlashOption(name='enabled',
                                                                                      choices=['✅', '❌'])):
+        if not await self.check_enabled(interaction):
+            return
         is_enabled = enabled == '✅'
         user_settings_helper.set_image_deletion_enabled(interaction.user.id, interaction.guild_id, is_enabled)
         confirmation_word = 'Enabled' if is_enabled else 'Disabled'
@@ -107,6 +111,8 @@ class ImageMessageDeleteCommands(commands.Cog):
                               delete_after: str = SlashOption(name='delete-after',
                                                               description='How long to wait before deleting the message.',
                                                               choices=['1d', '7d', '14d', '30d', 'keep'])):
+        if not await self.check_enabled(interaction):
+            return
         image_deletion_days = {
             '1d': 1,
             '7d': 7,
@@ -124,5 +130,16 @@ class ImageMessageDeleteCommands(commands.Cog):
                                        description='Remove your settings for image deletion in a channel.')
     async def reset(self, interaction: Interaction, channel: TextChannel = SlashOption(name='channel',
                                                                                        description='Channel to remove settings for.')):
+        if not await self.check_enabled(interaction):
+            return
         image_message_helper.reset_user_channel_delete_settings(interaction.guild.id, channel.id, interaction.user.id)
         await interaction.send(f"Removing image deletion settings for channel {channel.mention}.", ephemeral=True)
+
+    @staticmethod
+    async def check_enabled(interaction: Interaction):
+        guild_config = guild_config_helper.get_guild_config(interaction.guild_id)
+        if not guild_config.image_deletion_prompts_enabled:
+            await interaction.send(embed=messages.info('Image deletion prompts are not enabled in this server.'),
+                                   ephemeral=True)
+            return False
+        return True
