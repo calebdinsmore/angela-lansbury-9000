@@ -3,6 +3,9 @@ import nextcord
 from bot.cogs.threads.threads_helpers import ChannelThreads
 
 
+PER_PAGE = 1
+
+
 class ThreadsAllView(nextcord.ui.View):
     def __init__(self, channel_threads: list[ChannelThreads]):
         super().__init__()
@@ -62,6 +65,6 @@ class ThreadsAllView(nextcord.ui.View):
 
     def split_channel_threads_to_pages(self):
         pages = []
-        for i in range(0, len(self.channel_threads), 1):
-            pages.append(self.channel_threads[i:i + 5])
+        for i in range(0, len(self.channel_threads), PER_PAGE):
+            pages.append(self.channel_threads[i:i + PER_PAGE])
         return pages
