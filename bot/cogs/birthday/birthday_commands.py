@@ -67,8 +67,8 @@ class BirthdayCommands(commands.Cog):
                                                                  description='Channel to post birthday messages in.')):
         success = birthday_helper.update_settings(interaction.guild_id, channel.id)
         if not success:
-            return await interaction.send(f'An error occurred when updating birthday settings.')
-        await interaction.send('Successfully updated birthday settings!')
+            return await interaction.send(f'An error occurred when updating birthday settings.', ephemeral=True)
+        await interaction.send('Successfully updated birthday settings!', ephemeral=True)
 
     ##############################
     # Regular Slash Commands
