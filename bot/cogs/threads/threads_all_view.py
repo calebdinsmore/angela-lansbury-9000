@@ -62,6 +62,6 @@ class ThreadsAllView(nextcord.ui.View):
 
     def split_channel_threads_to_pages(self):
         pages = []
-        for i in range(0, len(self.channel_threads), 10):
+        for i in range(0, len(self.channel_threads), 1):
             pages.append(self.channel_threads[i:i + 5])
         return pages
