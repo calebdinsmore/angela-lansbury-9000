@@ -2,12 +2,10 @@ from datetime import datetime, timezone, time
 import asyncio
 
 import sentry_sdk
-from nextcord import slash_command, Interaction, SlashOption, Permissions, Member, TextChannel
+from nextcord import slash_command, Interaction, SlashOption, Member, TextChannel
 from nextcord.ext import commands, tasks
 
-from bot.config import Config
 from bot.utils import messages
-from bot.utils.constants import TESTING_GUILD_ID, BUMPERS_GUILD_ID
 from db.helpers import birthday_helper
 
 
@@ -40,6 +38,9 @@ class BirthdayCommands(commands.Cog):
             message = messages.birthday_message()
             for birthday in birthdays:
                 member = guild.get_member(birthday.user_id)
+                if member is None:
+                    # Can't find member, skip this birthday
+                    continue
                 message = messages.birthday_entry(message, birthday, member)
             message = messages.get_special_birthday_fields(message)
             await channel.send(embed=message)
@@ -73,8 +74,9 @@ class BirthdayCommands(commands.Cog):
     # Regular Slash Commands
     ##############################
 
-    @slash_command(name='birthday', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID],
-                   description='Birthday commands')
+    @slash_command(name='birthday',
+                   description='Birthday commands',
+                   force_global=True)
     async def birthday(self, interaction: Interaction):
         pass
 
