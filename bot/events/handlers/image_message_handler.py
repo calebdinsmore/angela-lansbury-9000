@@ -5,13 +5,16 @@ import sentry_sdk
 from bot.utils.messages import message_has_image
 from bot.views.delete_image import DeleteImage
 from db import ImageMessageToDelete, DB
-from db.helpers import image_message_helper, user_settings_helper
+from db.helpers import image_message_helper, user_settings_helper, guild_config_helper
 
 
 async def image_message_handler(message: nextcord.Message):
     if message.guild is None:
         return
     if not message_has_image(message):
+        return
+    guild_config = guild_config_helper.get_guild_config(message.guild.id)
+    if guild_config is not None and not guild_config.image_deletion_prompts_enabled:
         return
     view = DeleteImage()
     try:

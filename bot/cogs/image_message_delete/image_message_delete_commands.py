@@ -18,7 +18,7 @@ from nextcord.ext import commands, tasks
 from bot.utils import messages
 from bot.utils.constants import BUMPERS_GUILD_ID, TESTING_GUILD_ID
 from db import DB, ImageMessageToDelete
-from db.helpers import image_message_helper, user_settings_helper
+from db.helpers import image_message_helper, user_settings_helper, guild_config_helper
 
 
 class ImageMessageDeleteCommands(commands.Cog):
@@ -60,45 +60,6 @@ class ImageMessageDeleteCommands(commands.Cog):
         await asyncio.sleep(60)
         self.check_for_expired_messages.restart()
 
-    @slash_command(name='image-deletion-admin', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID],
-                   default_member_permissions=Permissions(manage_guild=True))
-    async def image_deleter(self, interaction: Interaction):
-        pass
-
-    @image_deleter.subcommand(name='retry', description='Retry failed image deletions.')
-    async def retry(self, interaction: Interaction, delete_failures: bool = SlashOption(name='delete-failures')):
-        await interaction.response.defer(ephemeral=True)
-        retry_results: List[str] = []
-        failed_messages: List[ImageMessageToDelete] = DB.s.execute(
-            sa.select(ImageMessageToDelete)
-              .where(ImageMessageToDelete.has_failed == True)
-        ).scalars().all()
-        deletions = 0
-        failures = 0
-        for failed_message in failed_messages:
-            try:
-                guild = self.bot.get_guild(failed_message.guild_id)
-                channel = guild.get_channel(failed_message.channel_id)
-                if not channel:
-                    channel = await self.bot.fetch_channel(failed_message.channel_id)
-                message = await channel.fetch_message(failed_message.message_id)
-                await message.delete()
-                retry_results.append(f'- Successfully deleted message {failed_message}. Deleting record.')
-                deletions += 1
-                DB.s.delete(failed_message)
-            except Exception as e:
-                retry_results.append(f'- Hit exception ({e}) for {failed_message}.')
-                failures += 1
-                if delete_failures:
-                    DB.s.delete(failed_message)
-        DB.s.commit()
-        result_message = '\n'.join(retry_results)
-        result_message += f'\nSuccessful deletions: {deletions}\n' \
-                          f'Failed retries: {failures}'
-        if len(retry_results) == 0:
-            result_message = 'No failed deletions found.'
-        await interaction.send(embed=messages.success(result_message), ephemeral=True)
-
     @slash_command(name='image-prompts', force_global=True)
     async def image_deleter_settings(self, interaction: Interaction):
         pass
@@ -107,7 +68,9 @@ class ImageMessageDeleteCommands(commands.Cog):
     async def show_settings(self, interaction: Interaction):
         user_settings = user_settings_helper.get_user_settings(interaction.user.id, interaction.guild_id)
         all_channel_settings = image_message_helper.get_all(interaction.guild_id, interaction.user.id)
-        embed = nextcord.Embed(title='Your Image Deletion Settings')
+        embed = nextcord.Embed(title='Your Image Deletion Settings',
+                               description='Note that these settings apply specifically to you. They do not affect '
+                                           'the server as a whole.')
         embed.add_field(name='Enabled?', value='✅' if user_settings.image_deletion_prompts_enabled else '❌')
         channel_setting_strings = []
         for channel_setting in all_channel_settings:

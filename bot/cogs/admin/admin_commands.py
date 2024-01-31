@@ -1,12 +1,16 @@
+from typing import List
+
 import nextcord
 import sentry_sdk
-from nextcord import slash_command, Interaction, SlashOption
+import sqlalchemy as sa
+from nextcord import slash_command, Interaction, SlashOption, Permissions
 from nextcord.ext import commands
 
 from bot.events.handlers.temp_discussion_handler import REACTION_CHANNEL_ID, REACTION_MESSAGE_ID, ROLE_ID, \
     REACTION_EMOJI
 from bot.utils import messages
 from bot.utils.constants import TESTING_GUILD_ID, ANGELA_TECH_SUPPORT_ID, BUMPERS_GUILD_ID
+from db import ImageMessageToDelete, DB
 
 
 class AdminCommands(commands.Cog):
@@ -88,3 +92,42 @@ class AdminCommands(commands.Cog):
             failures.append(owner_name)
 
         await interaction.send('Sent mass message.', embed=messages.error(f'Failures: {failures}'))
+
+    @slash_command(name='image-deletion-admin', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID],
+                   default_member_permissions=Permissions(manage_guild=True))
+    async def image_deleter(self, interaction: Interaction):
+        pass
+
+    @image_deleter.subcommand(name='retry', description='Retry failed image deletions.')
+    async def retry(self, interaction: Interaction, delete_failures: bool = SlashOption(name='delete-failures')):
+        await interaction.response.defer(ephemeral=True)
+        retry_results: List[str] = []
+        failed_messages: List[ImageMessageToDelete] = DB.s.execute(
+            sa.select(ImageMessageToDelete)
+                .where(ImageMessageToDelete.has_failed == True)
+        ).scalars().all()
+        deletions = 0
+        failures = 0
+        for failed_message in failed_messages:
+            try:
+                guild = self.bot.get_guild(failed_message.guild_id)
+                channel = guild.get_channel(failed_message.channel_id)
+                if not channel:
+                    channel = await self.bot.fetch_channel(failed_message.channel_id)
+                message = await channel.fetch_message(failed_message.message_id)
+                await message.delete()
+                retry_results.append(f'- Successfully deleted message {failed_message}. Deleting record.')
+                deletions += 1
+                DB.s.delete(failed_message)
+            except Exception as e:
+                retry_results.append(f'- Hit exception ({e}) for {failed_message}.')
+                failures += 1
+                if delete_failures:
+                    DB.s.delete(failed_message)
+        DB.s.commit()
+        result_message = '\n'.join(retry_results)
+        result_message += f'\nSuccessful deletions: {deletions}\n' \
+                          f'Failed retries: {failures}'
+        if len(retry_results) == 0:
+            result_message = 'No failed deletions found.'
+        await interaction.send(embed=messages.success(result_message), ephemeral=True)

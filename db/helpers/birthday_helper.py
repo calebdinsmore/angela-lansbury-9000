@@ -8,6 +8,7 @@ import datetime as dt
 from db.model.birthday import Birthday
 from db.model.guild_config import GuildConfig
 
+
 def add_birthday(guild_id: int, user_id: int, name: str, month: int, day: int, year: int):
     try:
         DB.s.add(Birthday(guild_id=guild_id, user_id=user_id, name=name, month=month, day=day, year=year))
@@ -17,20 +18,22 @@ def add_birthday(guild_id: int, user_id: int, name: str, month: int, day: int, y
         DB.s.rollback()
         return False
 
+
 def list_birthdays(guild_id: int, user_id: int):
     return DB.s.execute(
         sa.select(Birthday)
-        .where(Birthday.guild_id == guild_id)
-        .where(Birthday.user_id == user_id)
+            .where(Birthday.guild_id == guild_id)
+            .where(Birthday.user_id == user_id)
     ).all()
+
 
 def delete_birthday(guild_id: int, user_id: int, name: str):
     try:
         DB.s.execute(
             sa.delete(Birthday)
-            .where(Birthday.guild_id == guild_id)
-            .where(Birthday.user_id == user_id)
-            .where(Birthday.name == name)
+                .where(Birthday.guild_id == guild_id)
+                .where(Birthday.user_id == user_id)
+                .where(Birthday.name == name)
         )
         DB.s.commit()
         return True
@@ -38,16 +41,17 @@ def delete_birthday(guild_id: int, user_id: int, name: str):
         DB.s.rollback()
         return False
 
+
 def update_settings(guild_id: int, channel_id: int):
     try:
         if not DB.s.first(GuildConfig, guild_id=guild_id):
-                DB.s.add(GuildConfig(guild_id=guild_id,
-                                    birthday_channel_id=channel_id))
+            DB.s.add(GuildConfig(guild_id=guild_id,
+                                 birthday_channel_id=channel_id))
         else:
             DB.s.execute(
                 sa.update(GuildConfig)
-                .where(GuildConfig.guild_id == guild_id)
-                .values(birthday_channel_id=channel_id)
+                    .where(GuildConfig.guild_id == guild_id)
+                    .values(birthday_channel_id=channel_id)
             )
         DB.s.commit()
         return True
@@ -55,11 +59,13 @@ def update_settings(guild_id: int, channel_id: int):
         DB.s.rollback()
         return False
 
+
 def get_birthday_channel_id(guild_id: int):
     guild_config = DB.s.first(GuildConfig, guild_id=guild_id)
     if guild_config:
         return guild_config.birthday_channel_id
     return None
+
 
 def get_todays_birthdays() -> List[Birthday]:
     """
