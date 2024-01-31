@@ -21,6 +21,9 @@ def get_channel_threads(guild: nextcord.Guild) -> list[ChannelThreads]:
     """
     channel_threads = []
     for channel in guild.channels:
+        if channel.id == 1184224284902699151:
+            # Exclude October DITL due to unknown Discord bug.
+            continue
         if not isinstance(channel, nextcord.TextChannel) and not isinstance(channel, nextcord.ForumChannel):
             continue
         threads = []

@@ -3,7 +3,7 @@ import nextcord
 from bot.cogs.threads.threads_helpers import ChannelThreads
 
 
-PER_PAGE = 1
+PER_PAGE = 10
 
 
 class ThreadsAllView(nextcord.ui.View):
@@ -22,7 +22,7 @@ class ThreadsAllView(nextcord.ui.View):
         self.stop()
 
     @nextcord.ui.button(label='<', style=nextcord.ButtonStyle.blurple)
-    async def previous_page(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+    async def previous_page(self, _: nextcord.ui.Button, interaction: nextcord.Interaction):
         if self.current_page == 0:
             return
         self.current_page -= 1
@@ -30,7 +30,7 @@ class ThreadsAllView(nextcord.ui.View):
         await interaction.response.edit_message(embed=self.current_page_embed, view=self)
 
     @nextcord.ui.button(label='>', style=nextcord.ButtonStyle.blurple)
-    async def next_page(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+    async def next_page(self, _: nextcord.ui.Button, interaction: nextcord.Interaction):
         if self.current_page == len(self.pages) - 1:
             return
         self.current_page += 1
