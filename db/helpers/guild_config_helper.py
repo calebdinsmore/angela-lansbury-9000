@@ -5,6 +5,7 @@ def get_guild_config(guild_id: int):
     config = DB.s.first(GuildConfig, guild_id=guild_id)
     if not config:
         config = GuildConfig(guild_id=guild_id)
+        config.image_deletion_prompts_enabled = True
         DB.s.add(config)
         DB.s.commit()
     return config
