@@ -85,3 +85,15 @@ def get_special_birthday_fields(embed: nextcord.Embed):
         embed.add_field(name='\u200b', value=f'And a very happy birthday to those celebrating a leap year birthday.',
                         inline=False)
     return embed
+
+def get_months_old(month: int, year: int):
+    current_month = nextcord.utils.utcnow().month
+    current_year = nextcord.utils.utcnow().year
+    months_old = (current_year - year) * 12 + (current_month - month)
+    return months_old
+
+def baby_month_milestone_message(birthday: Birthday, member: nextcord.Member):
+    embed = nextcord.Embed(color=SUCCESS_COLOR, title='Someone is celebrating a milestone!')
+    months = str(get_months_old(birthday.month, birthday.year)) + " month" + {True: "s", False: ""}[get_months_old(birthday.month, birthday.year) > 1]
+    embed.add_field(name='\u200b', value=f'{member.mention} happy {months} to {birthday.name.title()}!', inline=False)
+    return embed

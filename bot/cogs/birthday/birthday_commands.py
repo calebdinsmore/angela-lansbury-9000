@@ -1,10 +1,12 @@
 from datetime import datetime, timezone, time
 import asyncio
+import calendar
 
 import sentry_sdk
 from nextcord import slash_command, Interaction, SlashOption, Member, TextChannel
 from nextcord.ext import commands, tasks
 
+from bot.config import Config
 from bot.utils import messages
 from db.helpers import birthday_helper
 
@@ -22,28 +24,58 @@ class BirthdayCommands(commands.Cog):
 
         birthdays_by_guild_id = birthday_helper.get_todays_birthdays()
         for guild_id, birthdays in birthdays_by_guild_id.items():
-            guild = self.bot.get_guild(guild_id)
-            if guild is None:
-                # Can't find guild, skip posting these birthdays
-                continue
-            birthday_channel_id = birthday_helper.get_birthday_channel_id(guild_id)
-            if birthday_channel_id is None:
-                # No birthday channel set, skip posting these birthdays
-                continue
-            channel = self.bot.get_channel(birthday_channel_id)
-            if channel is None:
-                # Can't find channel, skip posting these birthdays
-                continue
-            # Assemble birthday message
-            message = messages.birthday_message()
-            for birthday in birthdays:
-                member = guild.get_member(birthday.user_id)
-                if member is None:
-                    # Can't find member, skip this birthday
+            try:
+                guild = self.bot.get_guild(guild_id)
+                if guild is None:
+                    # Can't find guild, skip posting these birthdays
                     continue
-                message = messages.birthday_entry(message, birthday, member)
-            message = messages.get_special_birthday_fields(message)
-            await channel.send(embed=message)
+                birthday_channel_id = birthday_helper.get_birthday_channel_id(guild_id)
+                if birthday_channel_id is None:
+                    # No birthday channel set, skip posting these birthdays
+                    continue
+                channel = self.bot.get_channel(birthday_channel_id)
+                if channel is None:
+                    # Can't find channel, skip posting these birthdays
+                    continue
+                # Assemble birthday message
+                message = messages.birthday_message()
+                for birthday in birthdays:
+                    member = guild.get_member(birthday.user_id)
+                    if member is None:
+                        # Can't find member, skip this birthday
+                        continue
+                    message = messages.birthday_entry(message, birthday, member)
+                message = messages.get_special_birthday_fields(message)
+                await channel.send(embed=message)
+            except Exception as e:
+                sentry_sdk.capture_message(f'Unable to send birthday messages for {guild.name}')
+                sentry_sdk.capture_exception(e)
+        baby_month_milestones = birthday_helper.get_todays_baby_month_milestones()
+        for guild_id, birthdays in baby_month_milestones.items():
+            try:
+                guild = self.bot.get_guild(guild_id)
+                if guild is None:
+                    # Can't find guild, skip posting these birthdays
+                    continue
+                baby_month_milestone_channel_id = birthday_helper.get_baby_month_milestone_channel_id(guild_id)
+                if baby_month_milestone_channel_id is None:
+                    # No baby month milestone channel set, skip posting these birthdays
+                    continue
+                channel = self.bot.get_channel(baby_month_milestone_channel_id)
+                if channel is None:
+                    # Can't find channel, skip posting these birthdays
+                    continue
+                # Assemble baby month milestone message
+                for birthday in birthdays:
+                    member = guild.get_member(birthday.user_id)
+                    if member is None:
+                        # Can't find member, skip this message
+                        continue
+                    message = messages.baby_month_milestone_message(birthday, member)
+                    await channel.send(embed=message)
+            except Exception as e:
+                sentry_sdk.capture_message(f'Unable to send baby month milestone messages for {guild.name}')
+                sentry_sdk.capture_exception(e)
 
     @post_birthdays.error
     async def post_birthdays_error(self, e):
@@ -63,12 +95,45 @@ class BirthdayCommands(commands.Cog):
 
     @birthday_admin.subcommand(name='config', description='Configure birthday settings')
     async def birthday_config(self, interaction: Interaction,
-                              channel: TextChannel = SlashOption(name='channel',
-                                                                 description='Channel to post birthday messages in.')):
-        success = birthday_helper.update_settings(interaction.guild_id, channel.id)
-        if not success:
-            return await interaction.send(f'An error occurred when updating birthday settings.', ephemeral=True)
+                                birthday_channel: TextChannel = SlashOption(name='channel',
+                                                                description='Channel to post birthday messages in.', required=False),
+                                baby_month_milestone_channel: TextChannel = SlashOption(name='baby_month_milestone_channel', 
+                                                                description='Channel to post baby month milestone messages in.', required=False)):
+        if birthday_channel is not None:
+            success = birthday_helper.update_birthday_channel_settings(interaction.guild_id, birthday_channel.id)
+            if not success:
+                return await interaction.send(f'An error occurred when updating birthday channel settings.')
+            
+        if baby_month_milestone_channel is not None:
+            success = birthday_helper.update_baby_month_channel_settings(interaction.guild_id, baby_month_milestone_channel.id)
+            if not success:
+                return await interaction.send(f'An error occurred when updating baby milestone channel settings.', ephemeral=True)
         await interaction.send('Successfully updated birthday settings!', ephemeral=True)
+    
+    @birthday_admin.subcommand(name='add', description='Add a birthday')
+    async def birthday_admin_add(self, interaction: Interaction,
+                            user: Member = SlashOption(name='user', description='User to add birthday for'),
+                            name: str = SlashOption(name='name', description='Name of person celebrating a birthday'),
+                            date: str = SlashOption(name='date', description='Date of birthday (MM/DD/YYYY)')):
+        # Get date from added date, validate, and add to the database. Return an error if the name already exists or the date is invalid.
+        try:
+            dt = datetime.strptime(date, '%m/%d/%Y')
+            success = birthday_helper.add_birthday(interaction.guild_id, user.id, name.lower(), dt.month, dt.day, dt.year)
+            if success:
+                await interaction.send(f'Birthday added: `{name} | {dt.strftime("%b %d, %Y")}`', ephemeral=True)
+            else:
+                await interaction.send(f'Birthday already exists for {name.title()}. Try a different name, or remove the existing birthday first.', ephemeral=True)
+        except ValueError:
+            return await interaction.send('Please provide a date in the format MM/DD/YYYY', ephemeral=True)
+
+    @birthday_admin.subcommand(name='remove', description='Remove a birthday')
+    async def birthday_admin_remove(self, interaction: Interaction,
+                                user: Member = SlashOption(name='user', description='User to remove birthday for'),
+                                name: str = SlashOption(name='name', description='Name of birthday to remove')):
+        success = birthday_helper.delete_birthday(interaction.guild_id, user.id, name.lower())
+        if not success:
+            return await interaction.send(f'An error occurred when deleting birthday {name.title()} associated with user {user.display_name}.', ephemeral=True)
+        await interaction.send(f'Successfully deleted birthday for {user.display_name}!', ephemeral=True)
 
     ##############################
     # Regular Slash Commands
@@ -122,6 +187,26 @@ class BirthdayCommands(commands.Cog):
                               name: str = SlashOption(name='name', description='Name of birthday to remove')):
         success = birthday_helper.delete_birthday(interaction.guild_id, interaction.user.id, name.lower())
         if not success:
+            return await interaction.send(f'An error occurred when deleting birthday {name.title()} '
+                                          f'associated with user {interaction.user.display_name}.', ephemeral=True)
+        await interaction.send('Successfully deleted birthday!', ephemeral=True)
+    
+    @birthday.subcommand(name='upcoming', description='Show birthdays in the next month')
+    async def birthday_upcoming(self, interaction: Interaction):
+        birthdays = birthday_helper.get_upcoming_birthdays(interaction.guild_id)
+        if not birthdays:
+            return await interaction.send('There are no birthdays in the next month')
+        # Max of 25 embeds per message
+        max_birthdays_per_chunk = 25
+        birthday_chunks = [birthdays[i * max_birthdays_per_chunk:(i + 1) * max_birthdays_per_chunk] for i in range((len(birthdays) + max_birthdays_per_chunk - 1) // max_birthdays_per_chunk )]  
+        guild = self.bot.get_guild(interaction.guild_id)
+        for chunk in birthday_chunks:
+            embed = messages.info(f'Upcoming birthdays in the next month:')
+            for birthday in chunk:
+                member = guild.get_member(birthday.user_id)
+                embed.add_field(name=f'{calendar.month_name[birthday.month]} {birthday.day}', value=f'{member.mention}: {birthday.name.title()}', inline=False)
+            await interaction.send(embed=embed)
+        
             return await interaction.send(f'An error occurred when deleting birthday {name.title()} '
                                           f'associated with user {interaction.user.display_name}.', ephemeral=True)
         await interaction.send('Successfully deleted birthday!', ephemeral=True)
