@@ -206,7 +206,3 @@ class BirthdayCommands(commands.Cog):
                 member = guild.get_member(birthday.user_id)
                 embed.add_field(name=f'{calendar.month_name[birthday.month]} {birthday.day}', value=f'{member.mention}: {birthday.name.title()}', inline=False)
             await interaction.send(embed=embed)
-        
-            return await interaction.send(f'An error occurred when deleting birthday {name.title()} '
-                                          f'associated with user {interaction.user.display_name}.', ephemeral=True)
-        await interaction.send('Successfully deleted birthday!', ephemeral=True)

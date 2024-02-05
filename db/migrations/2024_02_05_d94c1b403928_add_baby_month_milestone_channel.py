@@ -1,8 +1,8 @@
-"""add baby month milestone channel
+"""Add baby month milestone channel
 
-Revision ID: cf931026a101
-Revises: b1deb87ac586
-Create Date: 2024-02-02 21:00:50.710390
+Revision ID: d94c1b403928
+Revises: 8a96c485c490
+Create Date: 2024-02-05 14:21:08.331697
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'cf931026a101'
-down_revision: Union[str, None] = 'b1deb87ac586'
+revision: str = 'd94c1b403928'
+down_revision: Union[str, None] = '8a96c485c490'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
