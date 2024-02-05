@@ -179,7 +179,7 @@ class BirthdayCommands(commands.Cog):
         embed.set_author(name=user.name, icon_url=icon_url)
         for birthday in birthdays:
             embed.add_field(name=birthday[0].name.title(),
-                            value=f'{birthday[0].month}/{birthday[0].day}/{birthday[0].year}')
+                            value=f'{birthday[0].year}/{birthday[0].month}/{birthday[0].day}')
         await interaction.send(embed=embed)
 
     @birthday.subcommand(name='remove', description='Remove a birthday')
