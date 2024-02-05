@@ -114,17 +114,17 @@ class BirthdayCommands(commands.Cog):
     async def birthday_admin_add(self, interaction: Interaction,
                             user: Member = SlashOption(name='user', description='User to add birthday for'),
                             name: str = SlashOption(name='name', description='Name of person celebrating a birthday'),
-                            date: str = SlashOption(name='date', description='Date of birthday (MM/DD/YYYY)')):
+                            date: str = SlashOption(name='date', description='Date of birthday (YYYY/MM/DD)')):
         # Get date from added date, validate, and add to the database. Return an error if the name already exists or the date is invalid.
         try:
-            dt = datetime.strptime(date, '%m/%d/%Y')
+            dt = datetime.strptime(date, '%Y/%m/%d')
             success = birthday_helper.add_birthday(interaction.guild_id, user.id, name.lower(), dt.month, dt.day, dt.year)
             if success:
                 await interaction.send(f'Birthday added: `{name} | {dt.strftime("%b %d, %Y")}`', ephemeral=True)
             else:
                 await interaction.send(f'Birthday already exists for {name.title()}. Try a different name, or remove the existing birthday first.', ephemeral=True)
         except ValueError:
-            return await interaction.send('Please provide a date in the format MM/DD/YYYY', ephemeral=True)
+            return await interaction.send('Please provide a date in the format YYYY/MM/DD', ephemeral=True)
 
     @birthday_admin.subcommand(name='remove', description='Remove a birthday')
     async def birthday_admin_remove(self, interaction: Interaction,
@@ -204,5 +204,8 @@ class BirthdayCommands(commands.Cog):
             embed = messages.info(f'Upcoming birthdays in the next month:')
             for birthday in chunk:
                 member = guild.get_member(birthday.user_id)
+                if member is None:
+                    # Can't find member, skip this message
+                    continue
                 embed.add_field(name=f'{calendar.month_name[birthday.month]} {birthday.day}', value=f'{member.mention}: {birthday.name.title()}', inline=False)
             await interaction.send(embed=embed)
