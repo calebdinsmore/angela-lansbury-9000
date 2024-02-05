@@ -95,7 +95,7 @@ class BirthdayCommands(commands.Cog):
 
     @birthday_admin.subcommand(name='config', description='Configure birthday settings')
     async def birthday_config(self, interaction: Interaction,
-                                birthday_channel: TextChannel = SlashOption(name='channel',
+                                birthday_channel: TextChannel = SlashOption(name='birthday_channel',
                                                                 description='Channel to post birthday messages in.', required=False),
                                 baby_month_milestone_channel: TextChannel = SlashOption(name='baby_month_milestone_channel', 
                                                                 description='Channel to post baby month milestone messages in.', required=False)):
