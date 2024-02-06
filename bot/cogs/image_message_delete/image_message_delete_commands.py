@@ -15,8 +15,8 @@ import sqlalchemy as sa
 from nextcord import slash_command, Permissions, Interaction, SlashOption, TextChannel
 from nextcord.ext import commands, tasks
 
-from bot.utils import messages
-from bot.utils.constants import BUMPERS_GUILD_ID, TESTING_GUILD_ID
+from bot.utils import messages, logger as log_util
+from bot.utils.logger import LoggingLevel
 from db import DB, ImageMessageToDelete
 from db.helpers import image_message_helper, user_settings_helper, guild_config_helper
 
@@ -38,6 +38,7 @@ class ImageMessageDeleteCommands(commands.Cog):
         ).scalars().all()
         for db_message_to_delete in expired_messages:
             guild = self.bot.get_guild(db_message_to_delete.guild_id)
+            channel = None
             try:
                 channel = guild.get_channel(db_message_to_delete.channel_id)
                 if not channel:
@@ -48,6 +49,12 @@ class ImageMessageDeleteCommands(commands.Cog):
             except nextcord.NotFound:
                 sentry_sdk.capture_message(f'Failed to find message {db_message_to_delete}')
                 db_message_to_delete.has_failed = True
+            except nextcord.Forbidden as e:
+                logger = log_util.Logger(LoggingLevel.GENERAL, self.bot, db_message_to_delete.guild_id)
+                if channel:
+                    await logger.error(f'Attempted to delete a message in {channel.mention} but lacked permissions.')
+                else:
+                    sentry_sdk.capture_exception(e)
             except Exception as e:
                 sentry_sdk.capture_exception(e)
                 db_message_to_delete.has_failed = True

@@ -9,3 +9,4 @@ class GuildConfig(DB.Model):
     guild_id: Mapped[int] = mapped_column(primary_key=True)
     birthday_channel_id: Mapped[int] = mapped_column(nullable=True)
     image_deletion_prompts_enabled: Mapped[bool] = mapped_column(nullable=True)
+    error_logging_channel_id: Mapped[int] = mapped_column(nullable=True)
