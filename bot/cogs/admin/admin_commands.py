@@ -55,14 +55,6 @@ class AdminCommands(commands.Cog):
         embed.add_field(name='Servers', value=guilds, inline=False)
         await interaction.send(embed=embed)
 
-    @slash_command(name='guild-owner', description='Find Guild Owner', guild_ids=[TESTING_GUILD_ID])
-    async def guild_owner(self, interaction: Interaction, guild_name: str = SlashOption(name='guild-name')):
-        for guild in self.bot.guilds:
-            if guild.name.lower() == guild_name.lower():
-                await interaction.send(f'Found guild owner: {guild.owner.name} | {guild.owner.display_name} | {guild.owner.mention}')
-                return
-        await interaction.send('Unable to find guild with that name.')
-
     @slash_command(name='owner-blast', description='Send a message to all server owners using Angela who arent in'
                                                    ' the tech support server.',
                    guild_ids=[TESTING_GUILD_ID])
