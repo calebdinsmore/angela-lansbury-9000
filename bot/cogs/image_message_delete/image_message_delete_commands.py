@@ -52,7 +52,8 @@ class ImageMessageDeleteCommands(commands.Cog):
             except nextcord.Forbidden as e:
                 logger = log_util.Logger(LoggingLevel.GENERAL, self.bot, db_message_to_delete.guild_id)
                 if channel:
-                    await logger.error(f'Attempted to delete a message in {channel.mention} but lacked permissions.')
+                    await logger.error(f'Attempted to delete a message in {channel.mention} but lacked permissions. '
+                                       f'Please give me the "Manage Messages" permission in your server settings.')
                 else:
                     sentry_sdk.capture_exception(e)
             except Exception as e:
