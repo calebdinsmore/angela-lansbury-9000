@@ -43,6 +43,7 @@ def delete_birthday(guild_id: int, user_id: int, name: str):
         DB.s.rollback()
         return False
 
+
 def update_birthday_channel_settings(guild_id: int, channel_id: int):
     try:
         if not DB.s.first(GuildConfig, guild_id=guild_id):
@@ -60,16 +61,17 @@ def update_birthday_channel_settings(guild_id: int, channel_id: int):
         DB.s.rollback()
         return False
 
+
 def update_baby_month_channel_settings(guild_id: int, channel_id: int):
     try:
         if not DB.s.first(GuildConfig, guild_id=guild_id):
-                DB.s.add(GuildConfig(guild_id=guild_id,
-                                    baby_month_milestone_channel_id=channel_id))
+            DB.s.add(GuildConfig(guild_id=guild_id,
+                                 baby_month_milestone_channel_id=channel_id))
         else:
             DB.s.execute(
                 sa.update(GuildConfig)
-                .where(GuildConfig.guild_id == guild_id)
-                .values(baby_month_milestone_channel_id=channel_id)
+                    .where(GuildConfig.guild_id == guild_id)
+                    .values(baby_month_milestone_channel_id=channel_id)
             )
         DB.s.commit()
         return True
@@ -78,17 +80,20 @@ def update_baby_month_channel_settings(guild_id: int, channel_id: int):
         DB.s.rollback()
         return False
 
+
 def get_birthday_channel_id(guild_id: int):
     guild_config = DB.s.first(GuildConfig, guild_id=guild_id)
     if guild_config:
         return guild_config.birthday_channel_id
     return None
 
+
 def get_baby_month_milestone_channel_id(guild_id: int):
     guild_config = DB.s.first(GuildConfig, guild_id=guild_id)
     if guild_config:
         return guild_config.baby_month_milestone_channel_id
     return None
+
 
 def get_todays_birthdays() -> List[Birthday]:
     """
@@ -110,9 +115,11 @@ def get_todays_birthdays() -> List[Birthday]:
         birthdays[birthday.guild_id].append(birthday)
     return birthdays
 
+
 def is_last_day_of_month() -> bool:
     now = dt.datetime.utcnow()
     return now.day == calendar.monthrange(now.year, now.month)[1]
+
 
 def get_todays_baby_month_milestones() -> List[Birthday]:
     """
@@ -138,12 +145,13 @@ def get_todays_baby_month_milestones() -> List[Birthday]:
             WHERE day > {now.day} and ((year = {now.year} and month < {now.month}) or (year = {last_year.year} and month >= {now.month}))
             ORDER BY guild_id desc;
             """)
-        ).all() 
-    # make hashmap of guild_id -> [birthdays]
+        ).all()
+        # make hashmap of guild_id -> [birthdays]
     birthdays = {guild_id: [] for guild_id in set([birthday.guild_id for birthday in queried_birthdays])}
     for birthday in queried_birthdays:
         birthdays[birthday.guild_id].append(birthday)
     return birthdays
+
 
 def get_upcoming_birthdays(guild_id: int):
     # Get birthdays for this guild in the next month
