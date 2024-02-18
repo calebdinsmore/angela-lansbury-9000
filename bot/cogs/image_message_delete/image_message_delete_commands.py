@@ -26,10 +26,10 @@ class ImageMessageDeleteCommands(commands.Cog):
         self.bot = bot
         self.check_for_expired_messages.start()
 
-    @tasks.loop(hours=1)
+    @tasks.loop(seconds=30)
     async def check_for_expired_messages(self):
         if not self.bot.is_ready():
-            return
+            await self.bot.wait_until_ready()
         now = dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc)
         expired_messages: List[ImageMessageToDelete] = DB.s.execute(
             sa.select(ImageMessageToDelete)
@@ -50,10 +50,12 @@ class ImageMessageDeleteCommands(commands.Cog):
                 sentry_sdk.capture_message(f'Failed to find message {db_message_to_delete}')
                 db_message_to_delete.has_failed = True
             except nextcord.Forbidden as e:
+                # db_message_to_delete.has_failed = True
                 logger = log_util.Logger(LoggingLevel.GENERAL, self.bot, db_message_to_delete.guild_id)
                 if channel:
                     await logger.error(f'Attempted to delete a message in {channel.mention} but lacked permissions. '
-                                       f'Please give me the "Manage Messages" permission in your server settings.')
+                                       f'Please ensure I have the "Manage Messages" permission in your server '
+                                       f'settings. If I do, ensure it isn\'t overridden by another role or channel.')
                 else:
                     sentry_sdk.capture_exception(e)
             except Exception as e:

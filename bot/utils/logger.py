@@ -53,10 +53,10 @@ class Logger:
             if channel_id:
                 self.error_channel = self.bot.get_channel(channel_id)
             if self.error_channel is None:
-                if guild.public_updates_channel:
-                    self.error_channel = guild.public_updates_channel
-                    error_embed.set_footer(text='Use `/server-admin error-log-channel` to set a custom error log '
-                                                'channel.')
+                if guild.owner:
+                    self.error_channel = guild.owner
+                    error_embed.set_footer(text='Use /server-admin error-log-channel in your server to set a custom '
+                                                'error log channel.')
         await self.error_channel.send(embed=error_embed)
 
     async def log(self, content: str):
