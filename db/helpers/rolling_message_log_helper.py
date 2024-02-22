@@ -96,10 +96,19 @@ def purge_old_messages(days=365):
 
 
 def message_count_for_author(author_id: int, guild_id: int, days=30):
-    now = dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc)
-    window_start = now - dt.timedelta(days=days)
-    return DB.s.execute(
-        sa.select(func.count(RollingMessageLog.message_id))
-          .where(RollingMessageLog.author_id == author_id)
-          .where(RollingMessageLog.sent_at > window_start).where(RollingMessageLog.guild_id == guild_id)
-    ).scalar()
+    results = DB.s.execute(
+        sa.text(f"""
+            SELECT 
+                COUNT(message_id) / 3 AS rolling_monthly_average
+            FROM 
+                rolling_message_log
+            WHERE 
+                sent_at >= date('now', '-{days} days') and guild_id = :guild_id and author_id = :author_id
+            GROUP BY 
+                author_id
+            ORDER BY
+                rolling_monthly_average DESC;
+            """),
+        {"guild_id": guild_id, "author_id": author_id}
+    ).first()
+    return results[0] if results else 0
