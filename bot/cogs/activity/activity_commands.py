@@ -61,8 +61,12 @@ class ActivityCommands(commands.Cog):
 
     @activity.subcommand(name='stats', description='View your activity stats.')
     async def stats(self, interaction: Interaction):
-        messages_last_thirty = rolling_message_log_helper.message_count_for_author(interaction.user.id, 30)
-        messages_last_ninety = rolling_message_log_helper.message_count_for_author(interaction.user.id, 90)
+        messages_last_thirty = rolling_message_log_helper.message_count_for_author(interaction.user.id,
+                                                                                   interaction.guild_id,
+                                                                                   30)
+        messages_last_ninety = rolling_message_log_helper.message_count_for_author(interaction.user.id,
+                                                                                   interaction.guild_id,
+                                                                                   90)
         messages_last_ninety = round(messages_last_ninety / 3, 2)
         embed = messages.info('Here are your activity stats.')
         embed.add_field(name='Messages sent in the last 30 days', value=messages_last_thirty)

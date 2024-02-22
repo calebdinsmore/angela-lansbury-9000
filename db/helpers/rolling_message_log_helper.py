@@ -74,10 +74,11 @@ def purge_old_messages(days=365):
     DB.s.commit()
 
 
-def message_count_for_author(author_id: int, days=30):
+def message_count_for_author(author_id: int, guild_id: int, days=30):
     now = dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc)
     window_start = now - dt.timedelta(days=days)
     return DB.s.execute(
-        sa.select(func.count(RollingMessageLog.message_id)).where(RollingMessageLog.author_id == author_id).where(
-            RollingMessageLog.sent_at > window_start)
+        sa.select(func.count(RollingMessageLog.message_id))
+          .where(RollingMessageLog.author_id == author_id)
+          .where(RollingMessageLog.sent_at > window_start).where(RollingMessageLog.guild_id == guild_id)
     ).scalar()
