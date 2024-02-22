@@ -77,7 +77,7 @@ class ActivityCommands(commands.Cog):
         settings = activity_module_settings_helper.get_settings(interaction.guild_id)
         all_stats = rolling_message_log_helper.get_all_ninety_day_stats(interaction.guild_id)
         embed = nextcord.Embed(title='Server Activity Stats', color=nextcord.Color.blurple())
-        description = ''
+        description = 'Each member\'s rolling monthly average message count:\n\n'
         member_count = 0
         inactive_count = 0
         for user_id, count in all_stats:
