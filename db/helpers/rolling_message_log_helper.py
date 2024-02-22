@@ -1,5 +1,7 @@
 from typing import List, Tuple
 
+from sqlalchemy import func
+
 from db import DB
 
 import sqlalchemy as sa
@@ -67,7 +69,7 @@ def purge_old_messages(days=365):
     one_month_ago = now - dt.timedelta(days=days)
     DB.s.execute(
         sa.delete(RollingMessageLog)
-        .where(RollingMessageLog.sent_at < one_month_ago)
+            .where(RollingMessageLog.sent_at < one_month_ago)
     )
     DB.s.commit()
 
@@ -76,7 +78,6 @@ def message_count_for_author(author_id: int, days=30):
     now = dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc)
     window_start = now - dt.timedelta(days=days)
     return DB.s.execute(
-        sa.select(RollingMessageLog)
-        .where(RollingMessageLog.author_id == author_id)
-        .where(RollingMessageLog.sent_at > window_start)
-    ).rowcount
+        sa.select(func.count(RollingMessageLog.message_id)).where(RollingMessageLog.author_id == author_id).where(
+            RollingMessageLog.sent_at > window_start)
+    ).scalar()

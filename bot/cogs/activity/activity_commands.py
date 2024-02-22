@@ -59,6 +59,15 @@ class ActivityCommands(commands.Cog):
     async def activity(self, interaction: Interaction):
         pass
 
+    @activity.subcommand(name='stats', description='View your activity stats.')
+    async def stats(self, interaction: Interaction):
+        messages_last_thirty = rolling_message_log_helper.message_count_for_author(interaction.user.id, 30)
+        messages_last_ninety = rolling_message_log_helper.message_count_for_author(interaction.user.id, 90)
+        embed = messages.info('Here are your activity stats.')
+        embed.add_field(name='Messages sent in the last 30 days', value=messages_last_thirty)
+        embed.add_field(name='Rolling monthly average (last 90 days)', value=messages_last_ninety)
+        await interaction.send(embed=embed, ephemeral=True)
+
     @activity.subcommand(name='initialize', description='Initialize user activity db')
     async def initialize(self, interaction: Interaction):
         await interaction.response.defer(with_message=True)
