@@ -67,7 +67,6 @@ class ActivityCommands(commands.Cog):
         messages_last_ninety = rolling_message_log_helper.message_count_for_author(interaction.user.id,
                                                                                    interaction.guild_id,
                                                                                    90)
-        messages_last_ninety = round(messages_last_ninety / 3, 2)
         embed = messages.info('Here are your activity stats.')
         embed.add_field(name='Messages sent in the last 30 days', value=messages_last_thirty)
         embed.add_field(name='Rolling monthly average (last 90 days)', value=messages_last_ninety)
