@@ -59,6 +59,27 @@ def user_in_sixty_day_inactives(user_id: int, guild_id: int):
     return False
 
 
+def get_all_ninety_day_stats(guild_id: int) -> List[Tuple[int, int]]:
+    results = DB.s.execute(
+        sa.text("""
+        SELECT 
+            author_id,
+            COUNT(message_id) / 3 AS rolling_monthly_average
+        FROM 
+            rolling_message_log
+        WHERE 
+            sent_at >= date('now', '-90 days') and guild_id = :guild_id
+        GROUP BY 
+            author_id
+        ORDER BY
+            rolling_monthly_average DESC;
+        """),
+        {"guild_id": guild_id}
+    ).all()
+    results = [(r[0], r[1]) for r in results]
+    return results
+
+
 def log_message(guild_id: int, author_id: int, message_id: int, sent_at: dt.datetime):
     DB.s.add(RollingMessageLog(guild_id=guild_id, message_id=message_id, author_id=author_id, sent_at=sent_at))
     DB.s.commit()

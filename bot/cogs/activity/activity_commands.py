@@ -73,6 +73,18 @@ class ActivityCommands(commands.Cog):
         embed.add_field(name='Rolling monthly average (last 90 days)', value=messages_last_ninety)
         await interaction.send(embed=embed, ephemeral=True)
 
+    @activity.subcommand(name='server-stats', description='View the server\'s activity stats.')
+    async def server_stats(self, interaction: Interaction):
+        all_stats = rolling_message_log_helper.get_all_ninety_day_stats(interaction.guild_id)
+        embed = nextcord.Embed(title='Server Activity Stats', color=nextcord.Color.blurple())
+        description = ''
+        for user_id, count in all_stats:
+            member = interaction.guild.get_member(user_id)
+            if member:
+                description += f'{member.mention}: {count}\n'
+        embed.description = description
+        await interaction.send(embed=embed, ephemeral=True)
+
     @activity.subcommand(name='initialize', description='Initialize user activity db')
     async def initialize(self, interaction: Interaction):
         await interaction.response.defer(with_message=True)
