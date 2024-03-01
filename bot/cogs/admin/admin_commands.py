@@ -103,7 +103,7 @@ class AdminCommands(commands.Cog):
         message = await channel.fetch_message(message_id)
         ayes = await message.reactions[0].users().flatten()
         aye_member_ids = [a.id for a in ayes]
-        non_voters = [m for m in guild.members if m.id not in aye_member_ids]
+        non_voters = [m for m in guild.members if m.id not in aye_member_ids and not m.bot]
         embed = nextcord.Embed(title='Current Non-Voters:')
         non_voters_string = '\n'.join([f'- {nv.mention}' for nv in non_voters])
         embed.description = non_voters_string
