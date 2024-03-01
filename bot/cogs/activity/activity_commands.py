@@ -84,7 +84,7 @@ class ActivityCommands(commands.Cog):
             member = interaction.guild.get_member(user_id)
             if member:
                 member_count += 1
-                member_name = f'**{member.display_name}** ({member.name})'
+                member_name = f'**{member.display_name}**'
                 if nextcord.utils.get(member.roles, id=settings.model.inactive_role_id):
                     description += f'{member_name}: {count} (**Inactive**)\n'
                     inactive_count += 1
