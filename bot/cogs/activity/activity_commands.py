@@ -84,11 +84,12 @@ class ActivityCommands(commands.Cog):
             member = interaction.guild.get_member(user_id)
             if member:
                 member_count += 1
+                member_name = f'**{member.display_name}** ({member.name})'
                 if nextcord.utils.get(member.roles, id=settings.model.inactive_role_id):
-                    description += f'{member.mention}: {count} (**Inactive**)\n'
+                    description += f'{member_name}: {count} (**Inactive**)\n'
                     inactive_count += 1
                 else:
-                    description += f'{member.mention}: {count}\n'
+                    description += f'{member_name}: {count}\n'
         description += f'\nTotal active members: {member_count - inactive_count}\nInactive members: {inactive_count}'
         embed.description = description
         await interaction.send(embed=embed, ephemeral=True)

@@ -93,6 +93,22 @@ class AdminCommands(commands.Cog):
 
         await interaction.send('Sent mass message.', embed=messages.error(f'Failures: {failures}'))
 
+    @slash_command(name='list-non-ratifiers',
+                   guild_ids=[BUMPERS_GUILD_ID],
+                   default_member_permissions=Permissions(manage_guild=True))
+    async def list_non_ratifiers(self, interaction: Interaction):
+        message_id = 1212871675440537630
+        guild = self.bot.get_guild(BUMPERS_GUILD_ID)
+        channel = await self.bot.fetch_channel(1212784801388429394)
+        message = await channel.fetch_message(message_id)
+        ayes = await message.reactions[0].users().flatten()
+        aye_member_ids = [a.id for a in ayes]
+        non_voters = [m for m in guild.members if m.id not in aye_member_ids]
+        embed = nextcord.Embed(title='Current Non-Voters:')
+        non_voters_string = '\n'.join([f'- {nv.mention}' for nv in non_voters])
+        embed.description = non_voters_string
+        await interaction.send(embed=embed, ephemeral=True)
+
     @slash_command(name='image-deletion-admin', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID],
                    default_member_permissions=Permissions(manage_guild=True))
     async def image_deleter(self, interaction: Interaction):
