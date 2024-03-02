@@ -119,17 +119,22 @@ class ActivityCommands(commands.Cog):
                           value='\n'.join([c for c in excluded_channels]) if excluded_channels else 'None')
         await interaction.send(embed=message, ephemeral=True)
 
-    @activity.subcommand(name='exclude-channel', description='Exclude a channel from counting toward activity')
+    @activity.subcommand(name='toggle-channel-exclusion', description='Toggle whether a channel is excluded from '
+                                                                      'activity tracking')
     async def exclude_channel(self,
                               interaction: Interaction,
                               channel: nextcord.TextChannel = SlashOption(name='channel')):
         settings = activity_module_settings_helper.get_settings(interaction.guild_id)
-        settings.add_excluded_channel(channel.id)
-        message = f'Excluded {channel.mention} from counting toward server activity.'
+        if channel.id in settings.excluded_channels:
+            settings.remove_excluded_channel(channel.id)
+            message = f'Included {channel.mention} in counting toward server activity.'
+        else:
+            settings.add_excluded_channel(channel.id)
+            message = f'Excluded {channel.mention} from counting toward server activity.'
         if not self._can_see_channel(channel.id):
             message += "\n\n⚠️ It looks like I'm unable to see that channel, so it would have been excluded anyway. " \
                        "Ensure that I'm present in all channels you wish to track activity within."
-        await interaction.send(message)
+        await interaction.send(message, ephemeral=True)
 
     @activity.subcommand(name='set-log-channel', description='Set the channel to log activity notifications to')
     async def set_log_channel(self,
