@@ -76,23 +76,21 @@ class ActivityCommands(commands.Cog):
     async def server_stats(self, interaction: Interaction):
         settings = activity_module_settings_helper.get_settings(interaction.guild_id)
         all_stats = rolling_message_log_helper.get_all_ninety_day_stats(interaction.guild_id)
-        embed = nextcord.Embed(title='Server Activity Stats', color=nextcord.Color.blurple())
-        description = 'Each member\'s rolling monthly average message count:\n\n'
+        description = '## Server Activity Stats\nEach member\'s rolling monthly average message count:\n\n'
         member_count = 0
         inactive_count = 0
         for user_id, count in all_stats:
             member = interaction.guild.get_member(user_id)
             if member:
                 member_count += 1
-                member_name = f'**{member.display_name}**'
+                member_name = f'{member.mention}'
                 if nextcord.utils.get(member.roles, id=settings.model.inactive_role_id):
                     description += f'{member_name}: {count} (**Inactive**)\n'
                     inactive_count += 1
                 else:
                     description += f'{member_name}: {count}\n'
         description += f'\nTotal active members: {member_count - inactive_count}\nInactive members: {inactive_count}'
-        embed.description = description
-        await interaction.send(embed=embed, ephemeral=True)
+        await interaction.send(description, ephemeral=True)
 
     @activity.subcommand(name='initialize', description='Initialize user activity db')
     async def initialize(self, interaction: Interaction):
