@@ -15,6 +15,7 @@ def initialize_user_activity(members: List[nextcord.Member], guild_id: int):
             DB.s.add(UserActivity(user_id=member.id,
                                   guild_id=guild_id,
                                   tracking_started_on=now))
+            print(f"Initialized user activity for {member.display_name}")
     DB.s.commit()
 
 
