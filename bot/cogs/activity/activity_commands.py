@@ -54,8 +54,7 @@ class ActivityCommands(commands.Cog):
         await asyncio.sleep(60)
         self.check_for_inactives.restart()
 
-    @slash_command(name='activity', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID],
-                   default_member_permissions=Permissions(manage_guild=True))
+    @slash_command(name='activity', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID])
     async def activity(self, interaction: Interaction):
         pass
 
@@ -66,13 +65,19 @@ class ActivityCommands(commands.Cog):
                                                                                    30)
         messages_last_ninety = rolling_message_log_helper.message_count_for_author(interaction.user.id,
                                                                                    interaction.guild_id,
-                                                                                   90)
+                                                                                   days=90,
+                                                                                   divisor=3)
         embed = messages.info('Here are your activity stats.')
         embed.add_field(name='Messages sent in the last 30 days', value=messages_last_thirty)
         embed.add_field(name='Rolling monthly average (last 90 days)', value=messages_last_ninety)
         await interaction.send(embed=embed, ephemeral=True)
 
-    @activity.subcommand(name='server-stats', description='View the server\'s activity stats.')
+    @slash_command(name='activity-admin', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID],
+                   default_member_permissions=Permissions(manage_guild=True))
+    async def activity_admin(self, interaction: Interaction):
+        pass
+
+    @activity_admin.subcommand(name='server-stats', description='View the server\'s activity stats.')
     async def server_stats(self, interaction: Interaction):
         settings = activity_module_settings_helper.get_settings(interaction.guild_id)
         all_stats = rolling_message_log_helper.get_all_ninety_day_stats(interaction.guild_id)
@@ -94,13 +99,13 @@ class ActivityCommands(commands.Cog):
         embed.description = description
         await interaction.send(embed=embed, ephemeral=True)
 
-    @activity.subcommand(name='initialize', description='Initialize user activity db')
+    @activity_admin.subcommand(name='initialize', description='Initialize user activity db')
     async def initialize(self, interaction: Interaction):
         await interaction.response.defer(with_message=True)
         user_activity_helper.initialize_user_activity(interaction.guild.members, interaction.guild_id)
         await interaction.send('DB initialized.')
 
-    @activity.subcommand(name='show-settings', description='Show the current activity settings.')
+    @activity_admin.subcommand(name='show-settings', description='Show the current activity settings.')
     async def show_settings(self, interaction: Interaction):
         settings = activity_module_settings_helper.get_settings(interaction.guild_id)
         inactive_role = None
@@ -119,7 +124,7 @@ class ActivityCommands(commands.Cog):
                           value='\n'.join([c for c in excluded_channels]) if excluded_channels else 'None')
         await interaction.send(embed=message, ephemeral=True)
 
-    @activity.subcommand(name='toggle-channel-exclusion', description='Toggle whether a channel is excluded from '
+    @activity_admin.subcommand(name='toggle-channel-exclusion', description='Toggle whether a channel is excluded from '
                                                                       'activity tracking')
     async def exclude_channel(self,
                               interaction: Interaction,
@@ -136,7 +141,7 @@ class ActivityCommands(commands.Cog):
                        "Ensure that I'm present in all channels you wish to track activity within."
         await interaction.send(message, ephemeral=True)
 
-    @activity.subcommand(name='set-log-channel', description='Set the channel to log activity notifications to')
+    @activity_admin.subcommand(name='set-log-channel', description='Set the channel to log activity notifications to')
     async def set_log_channel(self,
                               interaction: Interaction,
                               channel: nextcord.TextChannel = SlashOption(name='channel')):
@@ -152,14 +157,14 @@ class ActivityCommands(commands.Cog):
         DB.s.commit()
         await interaction.send(f'Set {channel} as the activity log channel.')
 
-    @activity.subcommand(name='reactivate-member', description='Reactivate a server member')
+    @activity_admin.subcommand(name='reactivate-member', description='Reactivate a server member')
     async def reactivate_member(self,
                                 interaction: Interaction,
                                 member: nextcord.Member = SlashOption(name='member')):
         user_activity_helper.setup_user(member.id, interaction.guild_id)
         await interaction.send(f'Reactivated {member.name}.')
 
-    @activity.subcommand(name='set-inactive-role', description='Configure the inactive role')
+    @activity_admin.subcommand(name='set-inactive-role', description='Configure the inactive role')
     async def set_inactive(self,
                            interaction: Interaction,
                            role: nextcord.Role = SlashOption(name='role')):
@@ -173,7 +178,7 @@ class ActivityCommands(commands.Cog):
         DB.s.commit()
         await interaction.send(f'Set inactive role to `{role.name}`.')
 
-    @activity.subcommand(name='set-break-role', description='Configure the "on break" role')
+    @activity_admin.subcommand(name='set-break-role', description='Configure the "on break" role')
     async def set_break(self,
                         interaction: Interaction,
                         role: nextcord.Role = SlashOption(name='role')):

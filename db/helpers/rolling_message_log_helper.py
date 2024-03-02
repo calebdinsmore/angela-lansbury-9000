@@ -95,11 +95,11 @@ def purge_old_messages(days=365):
     DB.s.commit()
 
 
-def message_count_for_author(author_id: int, guild_id: int, days=30):
+def message_count_for_author(author_id: int, guild_id: int, days=30, divisor=1):
     results = DB.s.execute(
         sa.text(f"""
             SELECT 
-                COUNT(message_id) / 3 AS rolling_monthly_average
+                COUNT(message_id) / {divisor} AS rolling_monthly_average
             FROM 
                 rolling_message_log
             WHERE 
