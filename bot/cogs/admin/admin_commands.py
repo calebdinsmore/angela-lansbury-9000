@@ -104,10 +104,9 @@ class AdminCommands(commands.Cog):
         ayes = await message.reactions[0].users().flatten()
         aye_member_ids = [a.id for a in ayes]
         non_voters = [m for m in guild.members if m.id not in aye_member_ids and not m.bot]
-        embed = nextcord.Embed(title='Current Non-Voters:')
         non_voters_string = '\n'.join([f'- {nv.mention}' for nv in non_voters])
-        embed.description = non_voters_string
-        await interaction.send(embed=embed, ephemeral=True)
+        content = '## Non-Ratifiers\n\n' + non_voters_string
+        await interaction.send(content, ephemeral=True)
 
     @slash_command(name='image-deletion-admin', guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID],
                    default_member_permissions=Permissions(manage_guild=True))
