@@ -15,5 +15,6 @@ from db.model.birthday import *
 from db.model.guild_config import *
 from db.model.user_channel_settings import *
 from db.model.user_settings import *
+from db.model.activity_role import *
 
 alembic = Alembic(DB, 'db/migrations')
