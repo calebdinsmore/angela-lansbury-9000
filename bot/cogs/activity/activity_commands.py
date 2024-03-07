@@ -63,13 +63,18 @@ class ActivityCommands(commands.Cog):
                                 rolling_month_window: int = SlashOption(name='rolling_month_window',
                                                                         description='How many prior months to average '
                                                                                     'for activity.',
-                                                                        required=False)):
+                                                                        required=False),
+                                grace_period_months: int = SlashOption(name='grace_period_months',
+                                                                       description='How many months to wait before '
+                                                                                   'adding or removing the role.',
+                                                                       required=False)):
         await activity_manager.add_activity_role(interaction,
                                                  role,
                                                  min_messages,
                                                  max_messages,
                                                  should_notify,
-                                                 rolling_month_window)
+                                                 rolling_month_window,
+                                                 grace_period_months)
 
     @activity_admin.subcommand(name='remove-activity-role', description='Remove the role to be given to active members.')
     async def remove_activity_role(self, interaction: Interaction, role: nextcord.Role = SlashOption(name='role')):

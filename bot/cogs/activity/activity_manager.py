@@ -67,6 +67,8 @@ async def process_activity_roles_task(bot: commands.Bot):
                 await logger.log(f'Activity role `{activity_role.role_name}` not found.')
         failures = []
         for member in guild.members:
+            if member.bot:
+                continue
             mutations = await activity_roles_for_member(member, activity_roles)
             try:
                 if mutations.add:
