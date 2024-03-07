@@ -155,7 +155,7 @@ async def show_server_stats(interaction: nextcord.Interaction):
         member = interaction.guild.get_member(user_id)
         if member:
             member_count += 1
-            member_name = f'**{member.display_name}**'
+            member_name = f'**{member.mention}**'
             if nextcord.utils.get(member.roles, id=settings.model.inactive_role_id):
                 description += f'{member_name}: {count} (**Inactive**)\n'
                 inactive_count += 1

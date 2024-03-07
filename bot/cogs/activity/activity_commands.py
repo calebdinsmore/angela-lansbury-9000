@@ -45,7 +45,7 @@ class ActivityCommands(commands.Cog):
     async def activity_admin(self, interaction: Interaction):
         pass
 
-    @activity_admin.subcommand(name='add-activity-role', description='Set the role to be given to active members.')
+    @activity_admin.subcommand(name='add-activity-role', description='Set a role to be given based on activity.')
     async def add_activity_role(self,
                                 interaction: Interaction,
                                 role: nextcord.Role = SlashOption(name='role'),
