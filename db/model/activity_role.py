@@ -14,6 +14,7 @@ class ActivityRole(DB.Model):
     max: Mapped[int] = mapped_column(nullable=True)
     should_notify: Mapped[bool] = mapped_column(default=False)
     rolling_month_window: Mapped[int] = mapped_column(default=1)
+    grace_period_months: Mapped[int] = mapped_column(nullable=True)
 
     role = None
 
@@ -26,4 +27,6 @@ class ActivityRole(DB.Model):
             errors.append('Minimum message count must be less than maximum message count.')
         if self.rolling_month_window is not None and self.rolling_month_window < 1:
             errors.append('Rolling month window must be at least 1.')
+        if self.grace_period_months is not None and self.grace_period_months < 0:
+            errors.append('Grace period months must be at least 0.')
         return errors

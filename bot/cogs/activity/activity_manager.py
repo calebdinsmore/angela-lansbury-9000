@@ -25,14 +25,16 @@ async def activity_roles_for_member(member: nextcord.Member, activity_roles: lis
     mutations = Mutations()
     logger = get_logger(LoggingLevel.ACTIVITY, member.guild.id)
     user_activity = user_activity_helper.get_or_create(member.id, member.guild.id)
-    if datetime.utcnow() - user_activity.tracking_started_on < timedelta(days=30):
-        # 30-day grace period
-        return mutations
     for ar in activity_roles:
         message_count = rolling_message_log_helper.message_count_for_author(member.id,
                                                                             member.guild.id,
                                                                             days=ar.rolling_month_window * 30,
                                                                             divisor=ar.rolling_month_window)
+
+        if ar.grace_period_months and \
+                datetime.utcnow() - user_activity.tracking_started_on < timedelta(days=30 * ar.grace_period_months):
+            # grace period is still active
+            continue
         min_messages = ar.min if ar.min else float('-inf')
         max_messages = ar.max if ar.max else float('inf')
         if min_messages <= message_count <= max_messages:
@@ -111,7 +113,8 @@ async def add_activity_role(interaction: nextcord.Interaction,
                             min_messages: int = None,
                             max_messages: int = None,
                             should_notify: bool = False,
-                            rolling_month_window: int = 1):
+                            rolling_month_window: int = 1,
+                            grace_period_months: int = 0):
     activity_role = activity_role_helper.get_activity_role(interaction.guild_id, role.id)
     did_exist = activity_role is not None
     if not activity_role:
@@ -121,12 +124,14 @@ async def add_activity_role(interaction: nextcord.Interaction,
                                      min=min_messages,
                                      max=max_messages,
                                      should_notify=should_notify,
-                                     rolling_month_window=rolling_month_window)
+                                     rolling_month_window=rolling_month_window,
+                                     grace_period_months=grace_period_months)
     else:
         activity_role.min = min_messages
         activity_role.max = max_messages
         activity_role.should_notify = should_notify
         activity_role.rolling_month_window = rolling_month_window
+        activity_role.grace_period_months = grace_period_months
     if activity_role.errors:
         await interaction.response.send_message('\n'.join(activity_role.errors), ephemeral=True)
         return
