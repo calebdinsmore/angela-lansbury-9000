@@ -4,6 +4,7 @@ import nextcord
 import sentry_sdk
 from nextcord.ext import commands
 
+from bot.cogs.activity.views.activity_stats_view import ActivityStatsView
 from bot.utils import messages
 from bot.utils.logger import get_logger, LoggingLevel
 from db.helpers import rolling_message_log_helper, activity_module_settings_helper, activity_role_helper, \
@@ -21,6 +22,7 @@ async def activity_roles_for_member(member: nextcord.Member, activity_roles: lis
         def __init__(self):
             self.add = []
             self.remove = []
+            self.errored = False
 
     mutations = Mutations()
     logger = get_logger(LoggingLevel.ACTIVITY, member.guild.id)
@@ -50,6 +52,21 @@ async def activity_roles_for_member(member: nextcord.Member, activity_roles: lis
     return mutations
 
 
+async def process_roles_for_member(member: nextcord.Member, activity_roles: list[ActivityRole]):
+    mutations = await activity_roles_for_member(member, activity_roles)
+    try:
+        if mutations.add:
+            await member.add_roles(*mutations.add, reason='Activity role assignment')
+        if mutations.remove:
+            await member.remove_roles(*mutations.remove, reason='Activity role removal')
+    except nextcord.Forbidden:
+        mutations.errored = True
+    except nextcord.HTTPException as e:
+        sentry_sdk.capture_exception(e)
+        mutations.errored = True
+    return mutations
+
+
 async def process_activity_roles_task(bot: commands.Bot):
     activity_role_dict = activity_role_helper.get_activity_roles_by_guild_id()
     for guild_id, activity_roles in activity_role_dict.items():
@@ -69,18 +86,9 @@ async def process_activity_roles_task(bot: commands.Bot):
         for member in guild.members:
             if member.bot:
                 continue
-            mutations = await activity_roles_for_member(member, activity_roles)
-            try:
-                if mutations.add:
-                    await member.add_roles(*mutations.add, reason='Activity role assignment')
-                if mutations.remove:
-                    await member.remove_roles(*mutations.remove, reason='Activity role removal')
-            except nextcord.Forbidden:
+            mutations = await process_roles_for_member(member, activity_roles)
+            if mutations.errored:
                 failures.append(member)
-                continue
-            except nextcord.HTTPException as e:
-                sentry_sdk.capture_exception(e)
-                continue
         if failures:
             failure_mentions = [f.mention for f in failures]
             await logger.log(f'Failed to assign activity roles to the following members: {", ".join(failure_mentions)}.')
@@ -100,9 +108,10 @@ async def show_stats(interaction: nextcord.Interaction):
                                                                                days=90,
                                                                                divisor=3)
     embed = messages.info('Here are your activity stats.')
-    embed.add_field(name='Messages sent in the last 30 days', value=messages_last_thirty)
-    embed.add_field(name='Rolling monthly average (last 90 days)', value=messages_last_ninety)
-    await interaction.send(embed=embed, ephemeral=True)
+    embed.add_field(name='Rolling monthly average (last 90 days)', value=f'**{messages_last_ninety}**')
+    embed.add_field(name='Messages sent in the last 30 days', value=messages_last_thirty, inline=False)
+    view = ActivityStatsView(embed)
+    await interaction.send(embed=embed, view=view, ephemeral=True)
 
 
 """

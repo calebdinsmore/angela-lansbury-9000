@@ -1,5 +1,3 @@
-import asyncio
-
 import nextcord
 import sentry_sdk
 from nextcord import Permissions, slash_command, Interaction, SlashOption
@@ -7,9 +5,8 @@ from nextcord.ext import commands, tasks
 
 from bot.cogs.activity import activity_manager
 from bot.utils.constants import TESTING_GUILD_ID, BUMPERS_GUILD_ID
-from bot.utils.logger import get_logger, LoggingLevel
-from db import DB, UserActivity
-from db.helpers import activity_module_settings_helper, user_activity_helper, rolling_message_log_helper
+from db import DB
+from db.helpers import activity_module_settings_helper, user_activity_helper
 
 
 class ActivityCommands(commands.Cog):

@@ -8,6 +8,10 @@ def get_activity_role(guild_id: int, role_id: int) -> ActivityRole:
     return DB.s.first(ActivityRole, guild_id=guild_id, role_id=role_id)
 
 
+def get_activity_roles_for_guild(guild_id: int) -> List[ActivityRole]:
+    return DB.s.all(ActivityRole, guild_id=guild_id)
+
+
 def get_activity_roles_by_guild_id() -> dict[int, List[ActivityRole]]:
     activity_roles: List[ActivityRole] = DB.s.all(ActivityRole)
     ar_dict = {}

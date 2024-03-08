@@ -1,3 +1,4 @@
+import cooldowns
 import nextcord
 import sentry_sdk
 from nextcord.ext import commands
@@ -12,7 +13,7 @@ from bot.config import Config
 from bot.events import on_member_join_event, on_guild_join_event, on_raw_reaction_add_event, \
     on_raw_reaction_remove_event
 from bot.events.on_message_event import register_event
-from bot.utils import logger
+from bot.utils import logger, messages
 
 intents = nextcord.Intents.all()
 config = Config()
@@ -40,6 +41,20 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
+
+
+@bot.event
+async def on_application_command_error(inter: nextcord.Interaction, error):
+    error = getattr(error, "original", error)
+
+    if isinstance(error, cooldowns.CallableOnCooldown):
+        await inter.send(
+            embed=messages.error(f"You are being rate-limited! Retry in `{error.retry_after}` seconds."),
+            ephemeral=True
+        )
+
+    else:
+        raise error
 
 
 def run():

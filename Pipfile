@@ -8,6 +8,7 @@ sqla-wrapper = "*"
 nextcord = "*"
 proper-cli = "*"
 sentry-sdk = "*"
+function-cooldowns = "*"
 
 [dev-packages]
 
