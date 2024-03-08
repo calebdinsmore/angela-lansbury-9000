@@ -12,7 +12,7 @@ from db.helpers import activity_module_settings_helper, user_activity_helper
 class ActivityCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # self.process_activity_roles.start()
+        self.process_activity_roles.start()
 
     @tasks.loop(hours=12)
     async def process_activity_roles(self):
