@@ -7,6 +7,7 @@ from bot.cogs import AutoDeleteCommands, ImageMessageDeleteCommands
 from bot.cogs.activity.activity_commands import ActivityCommands
 from bot.cogs.admin.admin_commands import AdminCommands
 from bot.cogs.birthday.birthday_commands import BirthdayCommands
+from bot.cogs.polls.poll_commands import PollCommands
 from bot.cogs.server_admin.server_admin_commands import ServerAdminCommands
 from bot.cogs.threads.threads_commands import ThreadsCommands
 from bot.config import Config
@@ -65,6 +66,7 @@ def run():
     bot.add_cog(AdminCommands(bot))
     bot.add_cog(ThreadsCommands(bot))
     bot.add_cog(ServerAdminCommands())
+    bot.add_cog(PollCommands(bot))
     logger.register_bot(bot)
     on_member_join_event.register_event(bot)
     on_guild_join_event.register_event(bot)
