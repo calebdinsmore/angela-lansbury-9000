@@ -5,7 +5,7 @@ from nextcord.ext import commands
 from bot.cogs.polls.views.create_poll_modal import CreatePollModal
 from bot.cogs.polls.views.poll_view import PollView
 from bot.cogs.polls.views.util import update_poll_message
-from bot.utils.constants import TESTING_GUILD_ID
+from bot.utils.constants import TESTING_GUILD_ID, BUMPERS_GUILD_ID
 from db.helpers import polls_helper
 
 
@@ -26,7 +26,7 @@ class PollCommands(commands.Cog):
             sentry_sdk.capture_message('Failed to register open polls! Check log immediately.')
             sentry_sdk.capture_exception(e)
 
-    @slash_command(name='poll', description='Poll commands', guild_ids=[TESTING_GUILD_ID])
+    @slash_command(name='poll', description='Poll commands', guild_ids=[BUMPERS_GUILD_ID, TESTING_GUILD_ID])
     async def poll(self, interaction: Interaction):
         pass
 
