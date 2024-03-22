@@ -20,5 +20,5 @@ class PollChoiceButton(nextcord.ui.Button):
                 remove_all_but_new_response(interaction.user.id, selected_choice.question_id, choice_id)
 
             await update_poll_message(selected_choice.question.id, interaction.channel)
-            # confirmation_content = confirmation_message(interaction.user.id, selected_choice.question_id)
-            # await interaction.response.send_message(confirmation_content, ephemeral=True)
+            confirmation_content = confirmation_message(interaction.user.id, selected_choice.question_id)
+            await interaction.send(confirmation_content, ephemeral=True)

@@ -22,12 +22,12 @@ def add_new_response_or_remove_existing(choice_id: int, user_id: int):
 def confirmation_message(user_id: int, poll_id: int):
     all_responses_for_user = polls_helper.get_responses_to_poll_for_respondent(user_id,
                                                                                poll_id)
-    confirmation_content = 'Your response has been recorded.'
+    confirmation_content = 'Your response has been recorded:'
     if all_responses_for_user:
-        confirmation_content += '\nYour responses to this poll are: \n```\n' + '\n'.join(
+        confirmation_content += '\n```' + '\n'.join(
             [response.choice.text for response in all_responses_for_user]) + '\n```'
     else:
-        confirmation_content += '\nYou have not selected any options.'
+        confirmation_content += '\n```(None selected)```'
     return confirmation_content
 
 
