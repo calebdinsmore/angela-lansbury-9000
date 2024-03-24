@@ -51,8 +51,11 @@ class PollCommands(commands.Cog):
 
     @poll_close.on_autocomplete('poll_id')
     async def _on_poll_title_autocomplete(self, interaction: Interaction, focused_option: str):
+        def shorten(text: str) -> str:
+            return text[:50] + '...' if len(text) > 50 else text
+
         matching_polls = polls_helper.search_open_polls(focused_option)
-        text_id_pairs = [(poll.text, str(poll.id)) for poll in matching_polls]
+        text_id_pairs = [(shorten(poll.text), str(poll.id)) for poll in matching_polls]
         text_id_pairs = dict(text_id_pairs)
         await interaction.response.send_autocomplete(text_id_pairs)
 
