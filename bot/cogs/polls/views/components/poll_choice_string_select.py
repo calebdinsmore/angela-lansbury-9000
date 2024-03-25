@@ -2,7 +2,7 @@ from typing import List
 
 import nextcord.ui
 
-from bot.cogs.polls.views.util import update_poll_message
+from bot.cogs.polls.views.util import update_poll_message, confirmation_message
 from db import PollResponse
 from db.helpers import polls_helper
 
@@ -29,4 +29,5 @@ class PollChoiceStringSelect(nextcord.ui.StringSelect):
                 polls_helper.delete(response, commit=False)
         polls_helper.save()
         await update_poll_message(poll_id, interaction.channel)
-        # await interaction.send('Your response has been recorded.', ephemeral=True)
+        confirmation_content = confirmation_message(interaction.user.id, poll_id)
+        await interaction.send(confirmation_content, ephemeral=True)

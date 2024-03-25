@@ -24,7 +24,7 @@ def confirmation_message(user_id: int, poll_id: int):
                                                                                poll_id)
     confirmation_content = 'Your response has been recorded:'
     if all_responses_for_user:
-        confirmation_content += '\n```' + '\n'.join(
+        confirmation_content += '\n```\n' + '\n'.join(
             [response.choice.text for response in all_responses_for_user]) + '\n```'
     else:
         confirmation_content += '\n```(None selected)```'
