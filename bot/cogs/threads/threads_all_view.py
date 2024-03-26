@@ -51,6 +51,9 @@ class ThreadsAllView(nextcord.ui.View):
                                description='Here is a list of all the active threads in this server.\n'
                                            f'Use the buttons to navigate between pages.\n',
                                color=nextcord.Color.dark_blue())
+        if not self.channel_threads:
+            embed.description = 'There are no active threads in this server.'
+            return embed
         for channel_thread in self.pages[self.current_page]:
             threads = []
             for thread in channel_thread.threads:

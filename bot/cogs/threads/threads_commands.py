@@ -20,7 +20,7 @@ class ThreadsCommands(commands.Cog):
     @threads.subcommand(name='all', description='See all threads in this server.')
     async def post_threads_index(self, interaction: nextcord.Interaction):
         await interaction.response.defer(ephemeral=True)
-        view = ThreadsAllView(threads_helpers.get_channel_threads(interaction.guild))
+        view = ThreadsAllView(threads_helpers.get_channel_threads(interaction.guild, interaction.user))
         await interaction.send(embed=view.current_page_embed, view=view, ephemeral=True)
 
     @threads.subcommand(name='search', description='Search for a thread by name.')

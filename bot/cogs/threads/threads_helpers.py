@@ -13,9 +13,10 @@ class ChannelThreads:
         self.threads = threads
 
 
-def get_channel_threads(guild: nextcord.Guild) -> list[ChannelThreads]:
+def get_channel_threads(guild: nextcord.Guild, member: nextcord.Member) -> list[ChannelThreads]:
     """
     Gets all the threads in a guild.
+    :param member:
     :param guild: The guild to get the threads for.
     :return: A list of ChannelThreads.
     """
@@ -23,6 +24,8 @@ def get_channel_threads(guild: nextcord.Guild) -> list[ChannelThreads]:
     for channel in guild.channels:
         if channel.id == 1184224284902699151:
             # Exclude October DITL due to unknown Discord bug.
+            continue
+        if not channel.permissions_for(member).read_messages:
             continue
         if not isinstance(channel, nextcord.TextChannel) and not isinstance(channel, nextcord.ForumChannel):
             continue
