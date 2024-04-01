@@ -37,7 +37,7 @@ else:
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=nextcord.CustomActivity(name='Ringing in the New Year 🎉'))
+    await bot.change_presence(activity=nextcord.CustomActivity(name='The Boulder is deleting your images. 🪨'))
     print('Logged in as')
     print(bot.user.name)
     print(bot.user.id)
