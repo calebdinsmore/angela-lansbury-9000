@@ -2,6 +2,7 @@ import datetime as dt
 import nextcord
 import sentry_sdk
 
+from bot.utils.constants import DO_APRIL_FOOLS
 from bot.utils.messages import message_has_image
 from bot.views.delete_image import DeleteImage
 from db import ImageMessageToDelete, DB
@@ -32,8 +33,12 @@ async def image_message_handler(message: nextcord.Message):
                 return
             mark_image_for_deletion(message, user_channel_delete_settings)
             return
+        text_content = '📸 I noticed you sent an image/video. Want me to delete it after a number of days?'
+        if DO_APRIL_FOOLS:
+            text_content = '🪨 **The Boulder** noticed you sent an image/video. Should **The Boulder** ' \
+                           'destroy it after a number of days?'
         prompt = await message.reply(
-            '📸 I noticed you sent an image/video. Want me to delete it after a number of days?',
+            text_content,
             view=view)
         await view.wait()
         await prompt.delete()

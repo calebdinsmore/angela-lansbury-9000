@@ -1,5 +1,7 @@
 import nextcord
 
+from bot.utils.constants import DO_APRIL_FOOLS
+
 
 class DeleteImage(nextcord.ui.View):
     def __init__(self):
@@ -26,17 +28,33 @@ class DeleteImage(nextcord.ui.View):
     async def keep(self, _: nextcord.ui.Button, interaction: nextcord.Interaction):
         original_image = interaction.message.reference
         if interaction.user.id != original_image.cached_message.author.id:
-            await interaction.send("You didn't send the image I'm asking about. Tsk tsk.", ephemeral=True)
+            text_content = "You didn't send the image I'm asking about. Tsk tsk."
+            if DO_APRIL_FOOLS:
+                text_content = "**The Boulder** is confused. " \
+                               "You didn't send the image **The Boulder** asked about."
+            await interaction.send(text_content, ephemeral=True)
             return
-        await interaction.send("Okay! I won't touch this one.", ephemeral=True)
+        text_content = "Okay! I won't touch this one."
+        if DO_APRIL_FOOLS:
+            text_content = "**The Boulder** has processed your request. " \
+                           "**The Boulder** will not pulverize your message into dust."
+        await interaction.send(text_content, ephemeral=True)
         self.stop()
 
     async def _handle_button(self, days: int, _: nextcord.ui.Button, interaction: nextcord.Interaction):
         original_image = interaction.message.reference
         if interaction.user.id != original_image.cached_message.author.id:
-            await interaction.send("You didn't send the image I'm asking about. Tsk tsk.", ephemeral=True)
+            text_content = "You didn't send the image I'm asking about. Tsk tsk."
+            if DO_APRIL_FOOLS:
+                text_content = "**The Boulder** is confused. " \
+                               "You didn't send the image **The Boulder** asked about."
+            await interaction.send(text_content, ephemeral=True)
             return
-        await interaction.send(f"You got it! I'll delete your message after {days} day{'s' if days != 1 else ''}.",
+        text_content = f"You got it! I'll delete your message after {days} day{'s' if days != 1 else ''}."
+        if DO_APRIL_FOOLS:
+            text_content = "**The Boulder** has processed your request. " \
+                           f"**The Boulder** will pulverize your message into dust in {days} day{'s' if days != 1 else ''}."
+        await interaction.send(text_content,
                                ephemeral=True)
         self.value = days
         self.stop()
