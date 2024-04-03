@@ -23,19 +23,18 @@ from db.helpers import image_message_helper, user_settings_helper, guild_config_
 
 async def handle_thread_message(thread: nextcord.Thread,
                                 message: nextcord.Message):
-    if not thread.archived and not thread.locked:
+    if not thread.archived:
         await message.delete()
         return
     if not message.channel.permissions_for(message.guild.me).manage_threads:
         await message.author.send(f'👋 I was unable to delete the following message in a thread because the thread '
-                                  f'is archived or locked, and I lack the necessary permissions: '
+                                  f'is closed, and I lack the necessary permissions: '
                                   f'{message.jump_url}')
         return
     was_archived = thread.archived
-    was_locked = thread.locked
-    await thread.edit(archived=False, locked=False)
+    await thread.edit(archived=False)
     await message.delete()
-    await thread.edit(archived=was_archived, locked=was_locked)
+    await thread.edit(archived=was_archived)
 
 
 class ImageMessageDeleteCommands(commands.Cog):
