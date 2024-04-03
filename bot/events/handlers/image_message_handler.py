@@ -1,6 +1,7 @@
 import datetime as dt
 import nextcord
 import sentry_sdk
+from nextcord.ext import commands
 
 from bot.utils.constants import DO_APRIL_FOOLS
 from bot.utils.messages import message_has_image
@@ -9,8 +10,21 @@ from db import ImageMessageToDelete, DB
 from db.helpers import image_message_helper, user_settings_helper, guild_config_helper
 
 
-async def image_message_handler(message: nextcord.Message):
+def bot_has_necessary_permissions(message: nextcord.Message):
+    bot_member = message.guild.me
+    channel_perms = message.channel.permissions_for(bot_member)
+    checks = [
+        channel_perms.manage_messages,
+        channel_perms.read_message_history,
+        channel_perms.send_messages
+    ]
+    return all(checks)
+
+
+async def image_message_handler(message: nextcord.Message, bot: commands.Bot):
     if message.guild is None:
+        return
+    if not bot_has_necessary_permissions(message):
         return
     if not message_has_image(message):
         return

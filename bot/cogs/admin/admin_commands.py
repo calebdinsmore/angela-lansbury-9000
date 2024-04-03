@@ -6,8 +6,6 @@ import sqlalchemy as sa
 from nextcord import slash_command, Interaction, SlashOption, Permissions
 from nextcord.ext import commands
 
-from bot.events.handlers.temp_discussion_handler import REACTION_CHANNEL_ID, REACTION_MESSAGE_ID, ROLE_ID, \
-    REACTION_EMOJI
 from bot.utils import messages
 from bot.utils.constants import TESTING_GUILD_ID, ANGELA_TECH_SUPPORT_ID, BUMPERS_GUILD_ID
 from db import ImageMessageToDelete, DB
@@ -17,33 +15,27 @@ class AdminCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @slash_command(name='distribute-role',
-                   description='Initialize discussion role distribution',
-                   guild_ids=[BUMPERS_GUILD_ID])
-    async def distribute_role(self, interaction: Interaction):
+    @slash_command(name='send-message',
+                   description='Send a message to a channel.',
+                   guild_ids=[TESTING_GUILD_ID, BUMPERS_GUILD_ID],
+                   default_member_permissions=Permissions(manage_guild=True))
+    async def send_message(self,
+                           interaction: Interaction,
+                           message: str = SlashOption(name='message',
+                                                      description='Message to send'),
+                           reply_to: str = SlashOption(name='reply_to',
+                                                       description='Message ID to reply to',
+                                                       required=False)):
         await interaction.response.defer(ephemeral=True)
         try:
-            reaction_channel = await self.bot.fetch_channel(REACTION_CHANNEL_ID)
-            reaction_message = await reaction_channel.fetch_message(REACTION_MESSAGE_ID)
-            reactions = reaction_message.reactions
-            added = 0
-            for reaction in reactions:
-                if str(reaction.emoji) != REACTION_EMOJI:
-                    continue
-                async for user in reaction.users():
-                    if user.bot:
-                        continue
-                    member = interaction.guild.get_member(user.id)
-                    if member is None:
-                        continue
-                    role = nextcord.utils.get(interaction.guild.roles, id=ROLE_ID)
-                    if role is None:
-                        continue
-                    await member.add_roles(role)
-                    added += 1
+            if reply_to:
+                reply_to_message = await interaction.channel.fetch_message(int(reply_to))
+                await reply_to_message.reply(message)
+            else:
+                await interaction.channel.send(message)
+            await interaction.send('Sent!', ephemeral=True)
         except Exception as e:
-            return await interaction.send(f'Something went wrong: {e}', ephemeral=True)
-        await interaction.send(f'Added {added} roles.', ephemeral=True)
+            await interaction.send(f'Something went wrong: {e}', ephemeral=True)
 
     @slash_command(name='summary',
                    description='Summary of guilds Angela has been added to.',
