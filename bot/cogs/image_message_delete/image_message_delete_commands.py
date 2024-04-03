@@ -21,6 +21,23 @@ from db import DB, ImageMessageToDelete
 from db.helpers import image_message_helper, user_settings_helper, guild_config_helper
 
 
+async def handle_thread_message(thread: nextcord.Thread,
+                                message: nextcord.Message):
+    if not thread.archived and not thread.locked:
+        await message.delete()
+        return
+    if not message.channel.permissions_for(message.guild.me).manage_threads:
+        await message.author.send(f'👋 I was unable to delete the following message in a thread because the thread '
+                                  f'is archived or locked, and I lack the necessary permissions: '
+                                  f'{message.jump_url}')
+        return
+    was_archived = thread.archived
+    was_locked = thread.locked
+    await thread.edit(archived=False, locked=False)
+    await message.delete()
+    await thread.edit(archived=was_archived, locked=was_locked)
+
+
 class ImageMessageDeleteCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -43,13 +60,10 @@ class ImageMessageDeleteCommands(commands.Cog):
                 if not channel:
                     channel = await self.bot.fetch_channel(db_message_to_delete.channel_id)
                 message = await channel.fetch_message(db_message_to_delete.message_id)
-                if isinstance(channel, nextcord.Thread) and channel.archived:
-                    # Thread is archived
-                    await message.author.send(f'👋 I tried and failed to delete a message in a thread because it '
-                                              f'is archived: {message.jump_url}')
-                    DB.s.delete(db_message_to_delete)
-                    continue
-                await message.delete()
+                if isinstance(channel, nextcord.Thread):
+                    await handle_thread_message(channel, message)
+                else:
+                    await message.delete()
                 DB.s.delete(db_message_to_delete)
             except nextcord.NotFound:
                 sentry_sdk.capture_message(f'Failed to find message {db_message_to_delete}')
