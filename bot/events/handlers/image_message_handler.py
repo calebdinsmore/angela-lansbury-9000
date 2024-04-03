@@ -25,7 +25,6 @@ async def image_message_handler(message: nextcord.Message):
     if message.guild is None:
         return
     if not bot_has_necessary_permissions(message):
-        print('Bot does not have necessary permissions to delete messages')
         return
     if not message_has_image(message):
         return
