@@ -22,7 +22,7 @@ class CheckPermsPageSource(menus.ListPageSource):
 def get_channel_perm_entries(guild: nextcord.Guild):
     entries = []
     for channel in guild.channels:
-        if isinstance(channel, nextcord.VoiceChannel):
+        if isinstance(channel, nextcord.VoiceChannel) or isinstance(channel, nextcord.CategoryChannel):
             continue
         channel_issues = []
         perms = channel.permissions_for(guild.me)
@@ -36,6 +36,8 @@ def get_channel_perm_entries(guild: nextcord.Guild):
             channel_issues.append(f'Send Messages: ❌')
         if not perms.send_messages_in_threads:
             channel_issues.append(f'Send Messages in Threads: ❌')
+        if not perms.manage_threads:
+            channel_issues.append(f'Manage Threads: ❌')
         if channel_issues:
             entries.append((f'#{channel.name}', '\n'.join(channel_issues)))
     return entries
