@@ -9,6 +9,7 @@ nextcord = "*"
 proper-cli = "*"
 sentry-sdk = "*"
 function-cooldowns = "*"
+nextcord-ext-menus = "*"
 
 [dev-packages]
 
