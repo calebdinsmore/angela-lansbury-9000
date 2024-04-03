@@ -29,7 +29,7 @@ class ImageMessageDeleteCommands(commands.Cog):
     @tasks.loop(hours=1)
     async def check_for_expired_messages(self):
         if not self.bot.is_ready():
-            return
+            await self.bot.wait_until_ready()
         now = dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc)
         expired_messages: List[ImageMessageToDelete] = DB.s.execute(
             sa.select(ImageMessageToDelete)
@@ -43,6 +43,12 @@ class ImageMessageDeleteCommands(commands.Cog):
                 if not channel:
                     channel = await self.bot.fetch_channel(db_message_to_delete.channel_id)
                 message = await channel.fetch_message(db_message_to_delete.message_id)
+                if isinstance(channel, nextcord.Thread) and channel.archived:
+                    # Thread is archived
+                    await message.author.send(f'👋 I tried and failed to delete a message in a thread because it '
+                                              f'is archived: {message.jump_url}')
+                    DB.s.delete(db_message_to_delete)
+                    continue
                 await message.delete()
                 DB.s.delete(db_message_to_delete)
             except nextcord.NotFound:

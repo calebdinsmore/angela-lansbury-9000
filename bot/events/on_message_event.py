@@ -11,5 +11,5 @@ def register_event(bot: commands.Bot):
         if message.author == bot.user:
             return
 
-        await image_message_handler(message)
+        await image_message_handler(message, bot)
         await activity_handler(message)
