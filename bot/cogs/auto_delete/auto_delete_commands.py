@@ -32,7 +32,7 @@ class AutoDeleteCommands(commands.Cog):
         that need to be pruned.
         """
         if not self.bot.is_ready():
-            return
+            await self.bot.wait_until_ready()
         configs: List[AutoDeleteChannelConfig] = DB.s.all(AutoDeleteChannelConfig)
         for config in configs:
             guild = await get_or_fetch_guild(self.bot, config.guild_id)
