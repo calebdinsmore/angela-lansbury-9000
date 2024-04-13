@@ -52,7 +52,7 @@ def get_stale_messages(all_messages: [nextcord.Message], config: AutoDeleteChann
     stale_messages: List[nextcord.Message] = []
     for message in all_messages:
         delta = dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc) - message.created_at
-        minutes_elapsed = delta.seconds // 60
+        minutes_elapsed = delta.total_seconds() // 60
         if minutes_elapsed >= config.delete_after_minutes:
             stale_messages.append(message)
     if config.auto_delete_type == AutoDeleteType.all:
