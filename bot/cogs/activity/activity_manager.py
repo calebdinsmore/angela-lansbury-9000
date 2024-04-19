@@ -70,6 +70,8 @@ async def process_roles_for_member(member: nextcord.Member, activity_roles: list
 async def process_activity_roles_task(bot: commands.Bot):
     activity_role_dict = activity_role_helper.get_activity_roles_by_guild_id()
     for guild_id, activity_roles in activity_role_dict.items():
+        activity_config = activity_module_settings_helper.get_settings(guild_id)
+        on_break_role_id = activity_config.model.break_role_id
         logger = get_logger(LoggingLevel.ACTIVITY, guild_id)
         guild = bot.get_guild(guild_id)
         bot_member = guild.get_member(bot.user.id)
@@ -85,6 +87,9 @@ async def process_activity_roles_task(bot: commands.Bot):
         failures = []
         for member in guild.members:
             if member.bot:
+                continue
+            if nextcord.utils.get(member.roles, id=on_break_role_id):
+                print('hit on break role check')
                 continue
             mutations = await process_roles_for_member(member, activity_roles)
             if mutations.errored:
