@@ -50,6 +50,12 @@ class AutoDeleteCommands(commands.Cog):
                                                         'Please reconfigure auto-delete in this channel.'))
                 auto_delete_helper.remove_channel_config(config.guild_id, config.channel_id)
                 continue
+            except nextcord.Forbidden:
+                await channel.send(embed=messages.error('It looks like I don\'t have Read Message History permissions '
+                                                        'for this channel. Please reconfigure auto-delete.'))
+                remove_config_and_report(config, f'Forbidden to read message history in channel {channel.name}'
+                                                 f'({guild.name})')
+                continue
             try:
                 all_messages = await channel.history(after=anchor_message, limit=10).flatten()
                 stale_messages = auto_delete_helper.get_stale_messages(all_messages, config)
@@ -57,6 +63,10 @@ class AutoDeleteCommands(commands.Cog):
                     await m.delete()
             except nextcord.Forbidden:
                 sentry_sdk.capture_message(f'Unable to delete messages in channel {channel.name} ({guild.name})')
+                await channel.send(embed=messages.error('It looks like I don\'t have the correct permissions '
+                                                        'for this channel. Please reconfigure auto-delete.'))
+                remove_config_and_report(config, f'Forbidden to read/delete messages in channel {channel.name}'
+                                                 f'({guild.name})')
 
     @check_for_stale_messages.error
     async def check_for_stale_messages_error(self, e):
