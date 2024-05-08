@@ -80,6 +80,9 @@ class AutoDeleteCommands(commands.Cog):
         if not isinstance(interaction.channel, nextcord.TextChannel):
             return await interaction.send(embed=messages.error('This command can only be used in a server\'s text '
                                                                'channel.'))
+        if not self._has_perms(interaction):
+            return await interaction.send(embed=messages.error('I need Manage Messages and Read Message History '
+                                                               'permissions for this channel to configure auto-delete.'), ephemeral=True)
         try:
             minutes_string = convert_minutes_to_human_readable(delete_after)
         except ValueError as e:
@@ -125,6 +128,11 @@ class AutoDeleteCommands(commands.Cog):
             return await interaction.send(
                 embed=messages.error("This channel isn't configured to auto-delete messages."))
         await interaction.send(embed=messages.success('Stopped auto-deletions in this channel.'))
+
+    @staticmethod
+    def _has_perms(interaction: Interaction):
+        perms = interaction.channel.permissions_for(interaction.guild.me)
+        return perms.manage_messages and perms.read_message_history
 
 
 def remove_config_and_report(config: AutoDeleteChannelConfig, message: str):

@@ -22,7 +22,7 @@ def bot_has_necessary_permissions(message: nextcord.Message):
 
 
 async def image_message_handler(message: nextcord.Message):
-    if message.guild is None:
+    if message.guild is None or message.guild.id is None:
         return
     if not message_has_image(message):
         return
