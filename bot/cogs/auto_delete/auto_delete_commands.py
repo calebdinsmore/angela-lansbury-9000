@@ -51,10 +51,11 @@ class AutoDeleteCommands(commands.Cog):
                 auto_delete_helper.remove_channel_config(config.guild_id, config.channel_id)
                 continue
             except nextcord.Forbidden:
-                await channel.send(embed=messages.error('It looks like I don\'t have Read Message History permissions '
-                                                        'for this channel. Please reconfigure auto-delete.'))
+                print(f'Forbidden to read message history in channel {channel.name} ({guild.name})')
                 remove_config_and_report(config, f'Forbidden to read message history in channel {channel.name}'
                                                  f'({guild.name})')
+                await guild.owner.send(embed=messages.error('It looks like I don\'t have Read Message History permissions '
+                                                            f'for this {channel.name}. Please reconfigure auto-delete.'))
                 continue
             try:
                 all_messages = await channel.history(after=anchor_message, limit=10).flatten()
@@ -62,11 +63,12 @@ class AutoDeleteCommands(commands.Cog):
                 for m in stale_messages:
                     await m.delete()
             except nextcord.Forbidden:
+                print(f'Forbidden to read message history in channel {channel.name} ({guild.name})')
                 sentry_sdk.capture_message(f'Unable to delete messages in channel {channel.name} ({guild.name})')
-                await channel.send(embed=messages.error('It looks like I don\'t have the correct permissions '
-                                                        'for this channel. Please reconfigure auto-delete.'))
                 remove_config_and_report(config, f'Forbidden to read/delete messages in channel {channel.name}'
                                                  f'({guild.name})')
+                await guild.owner.send(embed=messages.error('It looks like I don\'t have the correct permissions '
+                                                            f'for {channel.name}. Please reconfigure auto-delete.'))
 
     @check_for_stale_messages.error
     async def check_for_stale_messages_error(self, e):
