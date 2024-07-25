@@ -44,7 +44,6 @@ class AdminCommands(commands.Cog):
         guilds = '\n'.join([f'- {g.name}' for g in self.bot.guilds])
         embed = nextcord.Embed(description=guilds)
         embed.add_field(name='Server Count', value=len(self.bot.guilds))
-        embed.add_field(name='Servers', value=guilds, inline=False)
         await interaction.send(embed=embed)
 
     @slash_command(name='owner-blast', description='Send a message to all server owners using Angela who arent in'
