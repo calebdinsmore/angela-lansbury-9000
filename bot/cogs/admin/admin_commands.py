@@ -41,9 +41,9 @@ class AdminCommands(commands.Cog):
                    description='Summary of guilds Angela has been added to.',
                    guild_ids=[TESTING_GUILD_ID])
     async def summary(self, interaction: Interaction):
-        embed = nextcord.Embed()
-        embed.add_field(name='Server Count', value=len(self.bot.guilds))
         guilds = '\n'.join([f'- {g.name}' for g in self.bot.guilds])
+        embed = nextcord.Embed(description=guilds)
+        embed.add_field(name='Server Count', value=len(self.bot.guilds))
         embed.add_field(name='Servers', value=guilds, inline=False)
         await interaction.send(embed=embed)
 
