@@ -2,6 +2,7 @@
 .env
 **/static/*.csv
 *.bak
+.DS_Store
 
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm,python
 # Edit at https://www.toptal.com/developers/gitignore?templates=pycharm,python

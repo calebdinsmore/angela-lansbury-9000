@@ -7,7 +7,6 @@ import sentry_sdk
 from nextcord import slash_command, Interaction, SlashOption, Member, TextChannel, Permissions
 from nextcord.ext import commands, tasks
 
-from bot.config import Config
 from bot.utils import messages
 from db.helpers import birthday_helper
 
@@ -47,6 +46,9 @@ class BirthdayCommands(commands.Cog):
                         continue
                     message = messages.birthday_entry(message, birthday, member)
                 message = messages.get_special_birthday_fields(message)
+                if len(message.fields) == 0:
+                    # No birthdays to post, skip posting
+                    continue
                 await channel.send(embed=message)
             except nextcord.Forbidden as e:
                 sentry_sdk.capture_message(f'Lacked permissions to send birthday messages for {guild.name}. Notify '
