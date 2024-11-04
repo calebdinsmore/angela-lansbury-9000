@@ -16,7 +16,7 @@ from bot.events import on_member_join_event, on_guild_join_event, on_raw_reactio
 from bot.events.on_message_event import register_event
 from bot.utils import logger, messages
 
-intents = nextcord.Intents(messages=True, guilds=True, members=True)
+intents = nextcord.Intents(messages=True, message_content=True, guild_reactions=True, guilds=True, members=True)
 config = Config()
 bot = commands.Bot(intents=intents)
 
