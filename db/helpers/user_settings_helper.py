@@ -14,3 +14,7 @@ def set_image_deletion_enabled(user_id: int, guild_id: int, enabled: bool):
     user_settings = get_user_settings(user_id, guild_id)
     user_settings.image_deletion_prompts_enabled = enabled
     DB.s.commit()
+
+
+def commit():
+    DB.s.commit()
