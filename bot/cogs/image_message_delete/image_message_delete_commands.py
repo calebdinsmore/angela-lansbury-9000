@@ -84,62 +84,30 @@ class ImageMessageDeleteCommands(commands.Cog):
     async def image_deleter_settings(self, interaction: Interaction):
         pass
 
-    @image_deleter_settings.subcommand(name='show-settings', description='Show your image deletion settings.')
-    async def show_settings(self, interaction: Interaction):
-        if not await self.check_enabled(interaction):
-            return
-        user_settings = user_settings_helper.get_user_settings(interaction.user.id, interaction.guild_id)
-        all_channel_settings = image_message_helper.get_all(interaction.guild_id, interaction.user.id)
-        embed = nextcord.Embed(title='Your Image Deletion Settings',
-                               description='Note that these settings apply specifically to you. They do not affect '
-                                           'the server as a whole.')
-        embed.add_field(name='Enabled?', value='✅' if user_settings.image_deletion_prompts_enabled else '❌')
-        channel_setting_strings = []
-        for channel_setting in all_channel_settings:
-            channel = interaction.guild.get_channel(channel_setting.channel_id)
-            setting_text = 'Keep'
-            if channel_setting.delete_after > 0:
-                setting_text = f'{channel_setting.delete_after} days'
-            channel_setting_strings.append(f'{channel.mention}: {setting_text}')
-        embed.add_field(name='Channel Settings', value='\n'.join(channel_setting_strings), inline=False)
-
-        content = None if user_settings.image_deletion_prompts_enabled else 'Note: channel-specific settings are ' \
-                                                                            'irrelevant because image deletion ' \
-                                                                            'is disabled.'
-        await interaction.send(content, embed=embed, ephemeral=True)
-
-    @image_deleter_settings.subcommand(name='set-enabled',
-                                       description='Enable/disable image deletion prompts for your images.')
-    async def set_enabled(self, interaction: Interaction, enabled: str = SlashOption(name='enabled',
-                                                                                     choices=['✅', '❌'])):
-        if not await self.check_enabled(interaction):
-            return
-        is_enabled = enabled == '✅'
-        user_settings_helper.set_image_deletion_enabled(interaction.user.id, interaction.guild_id, is_enabled)
-        confirmation_word = 'Enabled' if is_enabled else 'Disabled'
-        note = '' if is_enabled else '\nAny images currently marked for deletion will still be deleted as scheduled.'
-        await interaction.send(embed=messages.success(f'{confirmation_word} image prompts for your messages in this '
-                                                      f'server.{note}'),
-                               ephemeral=True)
-
     @image_deleter_settings.subcommand(name='configure',
                                        description='Change your settings for image deletion in a channel.')
     async def channel_default(self, interaction: Interaction):
         if not await self.check_enabled(interaction):
             return
-        view = ConfigurePromptsView(interaction.guild_id,
-                                    interaction.user,
-                                    interaction.guild.text_channels,
-                                    interaction.guild.me)
-        await interaction.send(content=view.generate_current_configuration_display(),
-                               view=view,
-                               ephemeral=True)
+        try:
+            view = ConfigurePromptsView(interaction.guild_id,
+                                        interaction.user,
+                                        interaction.guild.text_channels,
+                                        interaction.guild.me)
+            await interaction.send(content=view.generate_current_configuration_display(),
+                                   view=view,
+                                   ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await interaction.send(embed=messages.error('An error occurred while trying to configure your image '
+                                                        'deletion settings.'),
+                                   ephemeral=True)
 
     @staticmethod
     async def check_enabled(interaction: Interaction):
         guild_config = guild_config_helper.get_guild_config(interaction.guild_id)
         if not guild_config.image_deletion_prompts_enabled:
-            await interaction.send(embed=messages.info('Image deletion prompts are not enabled in this server.'),
+            await interaction.send(embed=messages.info('Image deletion is not enabled in this server.'),
                                    ephemeral=True)
             return False
         return True
