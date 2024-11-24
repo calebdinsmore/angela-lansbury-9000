@@ -1,6 +1,7 @@
 import nextcord
 
 from bot.utils.constants import DO_APRIL_FOOLS
+from bot.views.delete_confirmation_view import DeleteConfirmationView
 
 
 class DeleteImage(nextcord.ui.View):
@@ -38,7 +39,9 @@ class DeleteImage(nextcord.ui.View):
         if DO_APRIL_FOOLS:
             text_content = "**The Boulder** has processed your request. " \
                            "**The Boulder** will not pulverize your message into dust."
-        await interaction.send(text_content, ephemeral=True)
+        delete_confirmation_view = DeleteConfirmationView(0, interaction.channel_id, interaction.guild_id,
+                                                          interaction.user.id)
+        await interaction.send(text_content, ephemeral=True, view=delete_confirmation_view)
         self.stop()
 
     async def _handle_button(self, days: int, _: nextcord.ui.Button, interaction: nextcord.Interaction):
@@ -54,7 +57,9 @@ class DeleteImage(nextcord.ui.View):
         if DO_APRIL_FOOLS:
             text_content = "**The Boulder** has processed your request. " \
                            f"**The Boulder** will pulverize your message into dust in {days} day{'s' if days != 1 else ''}."
+        delete_confirmation_view = DeleteConfirmationView(days, interaction.channel_id, interaction.guild_id, interaction.user.id)
         await interaction.send(text_content,
+                               view=delete_confirmation_view,
                                ephemeral=True)
         self.value = days
         self.stop()
