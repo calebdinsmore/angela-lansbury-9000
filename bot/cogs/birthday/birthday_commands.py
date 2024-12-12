@@ -1,6 +1,7 @@
 from datetime import datetime, timezone, time
 import asyncio
 import calendar
+from typing import List
 
 import nextcord
 import sentry_sdk
@@ -9,6 +10,13 @@ from nextcord.ext import commands, tasks
 
 from bot.utils import messages
 from db.helpers import birthday_helper
+
+
+async def fetch_member_map(guild: nextcord.Guild, user_ids: List[int]):
+    user_ids = list(set(user_ids))
+    birthday_members = await guild.query_members(user_ids=user_ids)
+    member_map = {m.id: m for m in birthday_members}
+    return member_map
 
 
 class BirthdayCommands(commands.Cog):
@@ -29,6 +37,8 @@ class BirthdayCommands(commands.Cog):
                 if guild is None:
                     # Can't find guild, skip posting these birthdays
                     continue
+                user_ids = [b.user_id for b in birthdays]
+                member_map = await fetch_member_map(guild, user_ids)
                 birthday_channel_id = birthday_helper.get_birthday_channel_id(guild_id)
                 if birthday_channel_id is None:
                     # No birthday channel set, skip posting these birthdays
@@ -40,7 +50,7 @@ class BirthdayCommands(commands.Cog):
                 # Assemble birthday message
                 message = messages.birthday_message()
                 for birthday in birthdays:
-                    member = guild.get_member(birthday.user_id)
+                    member = member_map.get(birthday.user_id)
                     if member is None:
                         # Can't find member, skip this birthday
                         continue
@@ -64,6 +74,8 @@ class BirthdayCommands(commands.Cog):
                 if guild is None:
                     # Can't find guild, skip posting these birthdays
                     continue
+                user_ids = [b.user_id for b in birthdays]
+                member_map = await fetch_member_map(guild, user_ids)
                 baby_month_milestone_channel_id = birthday_helper.get_baby_month_milestone_channel_id(guild_id)
                 if baby_month_milestone_channel_id is None:
                     # No baby month milestone channel set, skip posting these birthdays
@@ -74,7 +86,7 @@ class BirthdayCommands(commands.Cog):
                     continue
                 # Assemble baby month milestone message
                 for birthday in birthdays:
-                    member = guild.get_member(birthday.user_id)
+                    member = member_map.get(birthday.user_id)
                     if member is None:
                         # Can't find member, skip this message
                         continue
@@ -226,10 +238,12 @@ class BirthdayCommands(commands.Cog):
         birthday_chunks = [birthdays[i * max_birthdays_per_chunk:(i + 1) * max_birthdays_per_chunk] for i in
                            range((len(birthdays) + max_birthdays_per_chunk - 1) // max_birthdays_per_chunk)]
         guild = self.bot.get_guild(interaction.guild_id)
+        user_ids = [b.user_id for b in birthdays]
+        member_map = await fetch_member_map(guild, user_ids)
         for chunk in birthday_chunks:
             embed = messages.info(f'Upcoming birthdays in the next month:')
             for birthday in chunk:
-                member = guild.get_member(birthday.user_id)
+                member = member_map.get(birthday.user_id)
                 if member is None:
                     # Can't find member, skip this message
                     continue

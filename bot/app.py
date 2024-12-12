@@ -4,7 +4,6 @@ import sentry_sdk
 from nextcord.ext import commands
 
 from bot.cogs import AutoDeleteCommands, ImageMessageDeleteCommands
-from bot.cogs.activity.activity_commands import ActivityCommands
 from bot.cogs.admin.admin_commands import AdminCommands
 from bot.cogs.birthday.birthday_commands import BirthdayCommands
 from bot.cogs.polls.poll_commands import PollCommands
@@ -16,7 +15,7 @@ from bot.events import on_member_join_event, on_guild_join_event, on_raw_reactio
 from bot.events.on_message_event import register_event
 from bot.utils import logger, messages
 
-intents = nextcord.Intents(messages=True, members=True, message_content=True, guild_reactions=True, guilds=True)
+intents = nextcord.Intents(messages=True, message_content=True, guild_reactions=True, guilds=True)
 config = Config()
 bot = commands.Bot(intents=intents)
 
