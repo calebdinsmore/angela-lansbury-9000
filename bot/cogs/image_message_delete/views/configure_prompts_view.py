@@ -14,13 +14,15 @@ class ConfigurePromptsView(nextcord.ui.View):
                  guild_id: int,
                  user: nextcord.Member,
                  text_channels: List[nextcord.TextChannel],
-                 bot_user: nextcord.Member):
+                 bot_user: nextcord.Member,
+                 guild: nextcord.Guild):
         super().__init__()
         self.guild_id = guild_id
         self.user = user
         self.bot_user = bot_user
         self.user_id = user.id
         self.text_channels = text_channels
+        self.guild = guild
         self.selected_channel_ids = []
         self.selected_setting = None
         self.user_settings = user_settings_helper.get_user_settings(self.user_id, guild_id)
@@ -57,7 +59,9 @@ class ConfigurePromptsView(nextcord.ui.View):
         await interaction.response.edit_message(view=self, content=self.generate_current_configuration_display())
 
     @nextcord.ui.channel_select(placeholder='Select channels to configure.',
-                                channel_types=[nextcord.ChannelType.text],
+                                channel_types=[nextcord.ChannelType.text,
+                                               nextcord.ChannelType.public_thread,
+                                               nextcord.ChannelType.private_thread],
                                 min_values=1,
                                 max_values=25)
     async def channel_select(self, _: nextcord.ui.Select, interaction: nextcord.Interaction):
@@ -100,7 +104,7 @@ class ConfigurePromptsView(nextcord.ui.View):
             return
         await interaction.response.edit_message(content=f'✅ Configuration saved!', view=None)
         self.stop()
-        refreshed_view = ConfigurePromptsView(self.guild_id, self.user, self.text_channels, self.bot_user)
+        refreshed_view = ConfigurePromptsView(self.guild_id, self.user, self.text_channels, self.bot_user, self.guild)
         content = self.generate_current_configuration_display()
         await interaction.send(view=refreshed_view, content=content, ephemeral=True)
 
@@ -112,7 +116,7 @@ class ConfigurePromptsView(nextcord.ui.View):
     def _get_current_configuration(self):
         configs = image_message_helper.get_all(self.guild_id, self.user_id)
         channel_dict = {channel.id: channel for channel in self.text_channels}
-        return util.compile_user_channel_config_view_models(configs, channel_dict)
+        return util.compile_user_channel_config_view_models(configs, self.guild, channel_dict)
 
     def _set_button_enabled(self):
         if not self.image_deletion_enabled:

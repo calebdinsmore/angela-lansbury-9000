@@ -93,7 +93,8 @@ class ImageMessageDeleteCommands(commands.Cog):
             view = ConfigurePromptsView(interaction.guild_id,
                                         interaction.user,
                                         interaction.guild.text_channels,
-                                        interaction.guild.me)
+                                        interaction.guild.me,
+                                        interaction.guild)
             await interaction.send(content=view.generate_current_configuration_display(),
                                    view=view,
                                    ephemeral=True)
@@ -102,6 +103,7 @@ class ImageMessageDeleteCommands(commands.Cog):
             await interaction.send(embed=messages.error('An error occurred while trying to configure your image '
                                                         'deletion settings.'),
                                    ephemeral=True)
+            raise e
 
     @staticmethod
     async def check_enabled(interaction: Interaction):

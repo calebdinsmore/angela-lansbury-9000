@@ -4,7 +4,7 @@ from db import UserChannelSettings
 
 
 class UserChannelConfigViewModel:
-    def __init__(self, channel: nextcord.TextChannel, db_model: 'UserChannelSettings'):
+    def __init__(self, channel: nextcord.TextChannel | nextcord.Thread, db_model: 'UserChannelSettings'):
         self._channel = channel
         self._db_model = db_model
 
@@ -29,10 +29,14 @@ class UserChannelConfigViewModel:
 
 
 def compile_user_channel_config_view_models(db_models: list['UserChannelSettings'],
+                                            guild: nextcord.Guild,
                                             channels: dict[int, nextcord.TextChannel]):
     models = []
     for model in db_models:
         if channels.get(model.channel_id) is None:
-            continue
-        models.append(UserChannelConfigViewModel(channels.get(model.channel_id), model))
+            channel = guild.get_channel_or_thread(model.channel_id)
+            if channel:
+                models.append(UserChannelConfigViewModel(channel, model))
+        else:
+            models.append(UserChannelConfigViewModel(channels.get(model.channel_id), model))
     return models
