@@ -61,8 +61,7 @@ class BirthdayCommands(commands.Cog):
                     continue
                 await channel.send(embed=message)
             except nextcord.Forbidden as e:
-                sentry_sdk.capture_message(f'Lacked permissions to send birthday messages for {guild.name}. Notify '
-                                           f'{guild.owner.name} about permissions issue.')
+                sentry_sdk.capture_message(f'Lacked permissions to send birthday messages for {guild.name}.')
                 sentry_sdk.capture_exception(e)
             except Exception as e:
                 sentry_sdk.capture_message(f'Unable to send birthday messages for {guild.name}')
@@ -93,8 +92,7 @@ class BirthdayCommands(commands.Cog):
                     message = messages.baby_month_milestone_message(birthday, member)
                     await channel.send(embed=message)
             except nextcord.Forbidden as e:
-                sentry_sdk.capture_message(f'Lacked permissions to send milestone messages for {guild.name}. Notify '
-                                           f'{guild.owner.name} about permissions issue.')
+                sentry_sdk.capture_message(f'Lacked permissions to send milestone messages for {guild.name}.')
                 sentry_sdk.capture_exception(e)
             except Exception as e:
                 sentry_sdk.capture_message(f'Unable to send baby month milestone messages for {guild.name}')
