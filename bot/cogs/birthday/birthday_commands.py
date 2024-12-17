@@ -20,6 +20,10 @@ async def fetch_member_map(guild: nextcord.Guild, user_ids: List[int]):
     return member_map
 
 
+def bot_has_permissions(channel: nextcord.TextChannel):
+    return channel.permissions_for(channel.guild.me).send_messages
+
+
 class BirthdayCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -139,12 +143,19 @@ class BirthdayCommands(commands.Cog):
                                   name='baby_month_milestone_channel',
                                   description='Channel to post baby month milestone messages in.', required=False)):
         if birthday_channel is not None:
+            if not bot_has_permissions(birthday_channel):
+                return await interaction.send(f'I do not have permissions to send messages in {birthday_channel.mention}',
+                                              ephemeral=True)
             success = birthday_helper.update_birthday_channel_settings(interaction.guild_id, birthday_channel.id)
             if not success:
                 return await interaction.send(f'An error occurred when updating birthday channel settings.',
                                               ephemeral=True)
 
         if baby_month_milestone_channel is not None:
+            if not bot_has_permissions(baby_month_milestone_channel):
+                return await interaction.send(
+                    f'I do not have permissions to send messages in {baby_month_milestone_channel.mention}',
+                    ephemeral=True)
             success = birthday_helper.update_baby_month_channel_settings(interaction.guild_id,
                                                                          baby_month_milestone_channel.id)
             if not success:
