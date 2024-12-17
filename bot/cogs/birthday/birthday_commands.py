@@ -9,6 +9,7 @@ from nextcord import slash_command, Interaction, SlashOption, Member, TextChanne
 from nextcord.ext import commands, tasks
 
 from bot.utils import messages
+from bot.utils.constants import TESTING_GUILD_ID
 from db.helpers import birthday_helper
 
 
@@ -26,7 +27,7 @@ class BirthdayCommands(commands.Cog):
 
     # Every day at 5AM Pacific Time
     @tasks.loop(time=time(hour=12, minute=0, second=0, tzinfo=timezone.utc))
-    async def post_birthdays(self):
+    async def post_birthdays(self, optional_message: str = None):
         if not self.bot.is_ready():
             return
 
@@ -59,6 +60,7 @@ class BirthdayCommands(commands.Cog):
                 if len(message.fields) == 0:
                     # No birthdays to post, skip posting
                     continue
+                message.description = optional_message
                 await channel.send(embed=message)
             except nextcord.Forbidden as e:
                 sentry_sdk.capture_message(f'Lacked permissions to send birthday messages for {guild.name}.')
@@ -90,6 +92,7 @@ class BirthdayCommands(commands.Cog):
                         # Can't find member, skip this message
                         continue
                     message = messages.baby_month_milestone_message(birthday, member)
+                    message.description = optional_message
                     await channel.send(embed=message)
             except nextcord.Forbidden as e:
                 sentry_sdk.capture_message(f'Lacked permissions to send milestone messages for {guild.name}.')
@@ -108,6 +111,18 @@ class BirthdayCommands(commands.Cog):
     ##############################
     # Admin Slash Commands
     ##############################
+
+    @slash_command(name='birthday-super-admin',
+                   description='Birthday commands for super admins',
+                   default_member_permissions=Permissions(administrator=True),
+                   guild_ids=[TESTING_GUILD_ID])
+    async def birthday_super_admin(self, interaction: Interaction):
+        pass
+
+    @birthday_super_admin.subcommand(name='rerun-birthdays', description='Rerun birthday messages for today.')
+    async def rerun_birthdays(self, interaction: Interaction, optional_message: str = SlashOption(required=False)):
+        await self.post_birthdays(optional_message)
+        await interaction.send('Rerunning birthday messages for today.')
 
     @slash_command(name='birthday-admin',
                    description='Birthday commands for admins',
