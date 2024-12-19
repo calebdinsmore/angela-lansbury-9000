@@ -1,6 +1,10 @@
 from db import DB, GuildConfig
 
 
+def get_all_guild_configs():
+    return DB.s.query(GuildConfig).all()
+
+
 def get_guild_config(guild_id: int):
     config = DB.s.first(GuildConfig, guild_id=guild_id)
     if not config:

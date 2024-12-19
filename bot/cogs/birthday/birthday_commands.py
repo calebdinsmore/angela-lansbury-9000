@@ -10,7 +10,7 @@ from nextcord.ext import commands, tasks
 
 from bot.utils import messages
 from bot.utils.constants import TESTING_GUILD_ID
-from db.helpers import birthday_helper
+from db.helpers import birthday_helper, guild_config_helper
 
 
 async def fetch_member_map(guild: nextcord.Guild, user_ids: List[int]):
@@ -22,6 +22,26 @@ async def fetch_member_map(guild: nextcord.Guild, user_ids: List[int]):
 
 def bot_has_permissions(channel: nextcord.TextChannel):
     return channel.permissions_for(channel.guild.me).send_messages
+
+
+def channel_summary(birthday_channel_id: int, guild: nextcord.Guild):
+    summary = ''
+    if birthday_channel_id is not None:
+        channel = guild.get_channel(birthday_channel_id)
+        channel_issues = []
+        if channel is not None:
+            perms = channel.permissions_for(guild.me)
+            if not perms.send_messages:
+                channel_issues.append('- Bot lacks send messages permission\n')
+            if not perms.embed_links:
+                channel_issues.append('- Bot lacks embed links permission\n')
+            if not perms.read_messages:
+                channel_issues.append('- Bot lacks read messages permission\n')
+
+            if channel_issues:
+                summary = f'Issues with birthday channel #{channel.name}:\n'
+                summary += ''.join(channel_issues)
+    return summary
 
 
 class BirthdayCommands(commands.Cog):
@@ -122,6 +142,25 @@ class BirthdayCommands(commands.Cog):
                    guild_ids=[TESTING_GUILD_ID])
     async def birthday_super_admin(self, interaction: Interaction):
         pass
+
+    @birthday_super_admin.subcommand(name='audit-channel-perms', description='Check perms')
+    async def audit_channel_perms(self, interaction: Interaction):
+        guild_configs = guild_config_helper.get_all_guild_configs()
+        summary = ''
+        for guild_config in guild_configs:
+            guild = self.bot.get_guild(guild_config.guild_id)
+            if guild is None:
+                summary += f'Guild: {guild_config.guild_id} not found\n'
+                continue
+            birthday_channel_id = guild_config.birthday_channel_id
+            if birthday_channel_id is not None:
+                summary += channel_summary(birthday_channel_id, guild)
+            baby_month_milestone_channel_id = guild_config.baby_month_milestone_channel_id
+            if baby_month_milestone_channel_id is not None:
+                summary += channel_summary(baby_month_milestone_channel_id, guild)
+        if not summary:
+            summary = 'No channel issues'
+        await interaction.send(summary, ephemeral=True)
 
     @birthday_super_admin.subcommand(name='rerun-birthdays', description='Rerun birthday messages for today.')
     async def rerun_birthdays(self, interaction: Interaction, optional_message: str = SlashOption(required=False)):
