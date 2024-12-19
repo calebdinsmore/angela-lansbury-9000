@@ -21,7 +21,12 @@ async def fetch_member_map(guild: nextcord.Guild, user_ids: List[int]):
 
 
 def bot_has_permissions(channel: nextcord.TextChannel):
-    return channel.permissions_for(channel.guild.me).send_messages
+    perms = [
+        channel.permissions_for(channel.guild.me).send_messages,
+        channel.permissions_for(channel.guild.me).embed_links,
+        channel.permissions_for(channel.guild.me).read_messages
+    ]
+    return all(perms)
 
 
 def channel_summary(birthday_channel_id: int, guild: nextcord.Guild):
@@ -153,11 +158,16 @@ class BirthdayCommands(commands.Cog):
                 summary += f'Guild: {guild_config.guild_id} not found\n'
                 continue
             birthday_channel_id = guild_config.birthday_channel_id
+            channel_summaries = []
             if birthday_channel_id is not None:
-                summary += channel_summary(birthday_channel_id, guild)
+                channel_summaries.append(channel_summary(birthday_channel_id, guild))
             baby_month_milestone_channel_id = guild_config.baby_month_milestone_channel_id
             if baby_month_milestone_channel_id is not None:
-                summary += channel_summary(baby_month_milestone_channel_id, guild)
+                channel_summaries.append(channel_summary(baby_month_milestone_channel_id, guild))
+            channel_summaries = [c for c in channel_summaries if c]
+            if len(channel_summaries) > 0:
+                summary += f'Guild: {guild.name}\n'
+                summary += '\n'.join(channel_summaries)
         if not summary:
             summary = 'No channel issues'
         await interaction.send(summary, ephemeral=True)
@@ -193,7 +203,8 @@ class BirthdayCommands(commands.Cog):
         if baby_month_milestone_channel is not None:
             if not bot_has_permissions(baby_month_milestone_channel):
                 return await interaction.send(
-                    f'I do not have permissions to send messages in {baby_month_milestone_channel.mention}',
+                    f'I do not have the correct permissions to post birthdays in {baby_month_milestone_channel.mention}.'
+                    f'\nPlease ensure I have the Send Messages, View Channel, and Embed Links permissions.',
                     ephemeral=True)
             success = birthday_helper.update_baby_month_channel_settings(interaction.guild_id,
                                                                          baby_month_milestone_channel.id)
