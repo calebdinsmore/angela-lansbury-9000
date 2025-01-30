@@ -95,7 +95,7 @@ class ImageMessageDeleteCommands(commands.Cog):
                                         interaction.guild.text_channels,
                                         interaction.guild.me,
                                         interaction.guild)
-            await interaction.send(content=view.generate_current_configuration_display(),
+            await interaction.send(content=view.current_page_content,
                                    view=view,
                                    ephemeral=True)
         except Exception as e:

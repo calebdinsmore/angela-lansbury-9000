@@ -6,7 +6,7 @@ import sentry_sdk
 from bot.cogs.image_message_delete.views import util
 from db.helpers import image_message_helper, user_settings_helper
 
-PER_PAGE = 5
+PER_PAGE = 10
 
 
 class ConfigurePromptsView(nextcord.ui.View):
@@ -27,11 +27,52 @@ class ConfigurePromptsView(nextcord.ui.View):
         self.selected_setting = None
         self.user_settings = user_settings_helper.get_user_settings(self.user_id, guild_id)
         self.toggle_button.label = '✅ Image deletion enabled' if self.user_settings.image_deletion_prompts_enabled else '❌ Image deletion disabled'
+
+        self.config_displays, self.permissions_issue = self.generate_channel_config_displays()
+        self.current_page_idx = 0
+        self.previous_page = nextcord.ui.Button(style=nextcord.ButtonStyle.secondary, emoji='◀️', row=0)
+        self.next_page = nextcord.ui.Button(style=nextcord.ButtonStyle.secondary, emoji='▶️', row=0)
+        self.previous_page.callback = self.go_back
+        self.next_page.callback = self.go_forward
+        if self.page_count > 1:
+            self.add_item(self.previous_page)
+            self.add_item(self.next_page)
+
         self._set_button_enabled()
 
     @property
     def image_deletion_enabled(self):
         return self.user_settings.image_deletion_prompts_enabled
+
+    @property
+    def page_count(self):
+        return len(self.config_displays) // PER_PAGE + 1
+
+    @property
+    def current_page_displays(self):
+        return self.config_displays[self.current_page_idx * PER_PAGE:(self.current_page_idx + 1) * PER_PAGE]
+
+    @property
+    def current_page_content(self):
+        content = '## Channel Configs\n' + '\n'.join(self.current_page_displays)
+        if self.permissions_issue:
+            content += '\n-# A ⚠️ icon indicates that I do not have the required permissions to do image deletions in ' \
+                       'that channel.'
+        if self.page_count > 1:
+            content += f'\n\n-# Page {self.current_page_idx + 1}/{self.page_count}'
+        return content
+
+    def generate_channel_config_displays(self):
+        configs = self._get_current_configuration()
+        displays = []
+        permission_issue = False
+        for config in configs:
+            if not config.bot_has_permissions(self.bot_user):
+                permission_issue = True
+                displays.append(f'- ~~{config.display}~~ ⚠️')
+            else:
+                displays.append(f'- {config.display}')
+        return displays, permission_issue
 
     def generate_current_configuration_display(self):
         if not self.image_deletion_enabled:
@@ -50,20 +91,31 @@ class ConfigurePromptsView(nextcord.ui.View):
         permission_text = '-# A ⚠️ icon indicates that I do not have the required permissions to do image deletions in that channel.\n' if permission_issue else ''
         return '## Channel Configs\n' + '\n'.join(displays) + '\n' + permission_text
 
-    @nextcord.ui.button(label='✅ Image deletion enabled', style=nextcord.ButtonStyle.primary)
+    async def go_back(self, interaction: nextcord.Interaction):
+        self.current_page_idx -= 1
+        self._set_button_enabled()
+        await interaction.response.edit_message(view=self, content=self.current_page_content)
+
+    async def go_forward(self, interaction: nextcord.Interaction):
+        self.current_page_idx += 1
+        self._set_button_enabled()
+        await interaction.response.edit_message(view=self, content=self.current_page_content)
+
+    @nextcord.ui.button(label='✅ Image deletion enabled', style=nextcord.ButtonStyle.primary, row=1)
     async def toggle_button(self, _: nextcord.ui.Button, interaction: nextcord.Interaction):
         self.user_settings.image_deletion_prompts_enabled = not self.user_settings.image_deletion_prompts_enabled
         user_settings_helper.commit()
         self.toggle_button.label = '✅ Image deletion enabled' if self.user_settings.image_deletion_prompts_enabled else '❌ Image deletion disabled'
         self._set_button_enabled()
-        await interaction.response.edit_message(view=self, content=self.generate_current_configuration_display())
+        await interaction.response.edit_message(view=self, content=self.current_page_content)
 
     @nextcord.ui.channel_select(placeholder='Select channels to configure.',
                                 channel_types=[nextcord.ChannelType.text,
                                                nextcord.ChannelType.public_thread,
                                                nextcord.ChannelType.private_thread],
                                 min_values=1,
-                                max_values=25)
+                                max_values=25,
+                                row=2)
     async def channel_select(self, _: nextcord.ui.Select, interaction: nextcord.Interaction):
         values: List[str] = interaction.data.get('values')
         self.selected_channel_ids = [int(value) for value in values]
@@ -77,7 +129,8 @@ class ConfigurePromptsView(nextcord.ui.View):
                                         nextcord.SelectOption(label='30 days', value='30'),
                                         ],
                                min_values=1,
-                               max_values=1)
+                               max_values=1,
+                               row=3)
     async def retention_select(self, _: nextcord.ui.Select, interaction: nextcord.Interaction):
         values = interaction.data.get('values')
         if values:
@@ -105,7 +158,7 @@ class ConfigurePromptsView(nextcord.ui.View):
         await interaction.response.edit_message(content=f'✅ Configuration saved!', view=None)
         self.stop()
         refreshed_view = ConfigurePromptsView(self.guild_id, self.user, self.text_channels, self.bot_user, self.guild)
-        content = self.generate_current_configuration_display()
+        content = refreshed_view.current_page_content
         await interaction.send(view=refreshed_view, content=content, ephemeral=True)
 
     @nextcord.ui.button(label='Close', style=nextcord.ButtonStyle.danger, row=4)
@@ -127,3 +180,11 @@ class ConfigurePromptsView(nextcord.ui.View):
             self.channel_select.disabled = False
             self.retention_select.disabled = False
             self.save_button.disabled = False
+        if self.current_page_idx == 0:
+            self.previous_page.disabled = True
+        else:
+            self.previous_page.disabled = False
+        if self.current_page_idx == self.page_count - 1:
+            self.next_page.disabled = True
+        else:
+            self.next_page.disabled = False
