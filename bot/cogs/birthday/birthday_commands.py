@@ -65,6 +65,8 @@ class BirthdayCommands(commands.Cog):
             try:
                 guild = self.bot.get_guild(guild_id)
                 if guild is None:
+                    guild = nextcord.utils.get(self.bot.guilds, id=guild_id)
+                if guild is None:
                     # Can't find guild, skip posting these birthdays
                     continue
                 user_ids = [b.user_id for b in birthdays]
@@ -153,7 +155,7 @@ class BirthdayCommands(commands.Cog):
         guild_configs = guild_config_helper.get_all_guild_configs()
         summary = ''
         for guild_config in guild_configs:
-            guild = self.bot.get_guild(guild_config.guild_id)
+            guild = nextcord.utils.get(self.bot.guilds, id=guild_config.guild_id)
             if guild is None:
                 summary += f'Guild: {guild_config.guild_id} not found\n'
                 continue
