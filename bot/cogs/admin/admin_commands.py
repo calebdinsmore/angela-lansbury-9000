@@ -40,8 +40,9 @@ class AdminCommands(commands.Cog):
     @slash_command(name='summary',
                    description='Summary of guilds Angela has been added to.',
                    guild_ids=[TESTING_GUILD_ID])
-    async def summary(self, interaction: Interaction):
-        guilds = '\n'.join([f'- {g.name}' for g in self.bot.guilds])
+    async def summary(self, interaction: Interaction, name: str = SlashOption(name='name', required=False)):
+        guilds = '\n'.join([f'- {g.name} {g.id if name is not None and name.lower() in g.name.lower() else ""}'
+                            for g in self.bot.guilds])
         embed = nextcord.Embed(description=guilds)
         embed.add_field(name='Server Count', value=len(self.bot.guilds))
         await interaction.send(embed=embed)
