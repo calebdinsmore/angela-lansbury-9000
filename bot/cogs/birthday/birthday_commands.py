@@ -8,7 +8,7 @@ import sentry_sdk
 from nextcord import slash_command, Interaction, SlashOption, Member, TextChannel, Permissions
 from nextcord.ext import commands, tasks
 
-from bot.utils import messages
+from bot.utils import messages, bot_utils
 from bot.utils.constants import TESTING_GUILD_ID
 from db.helpers import birthday_helper, guild_config_helper
 
@@ -29,10 +29,10 @@ def bot_has_permissions(channel: nextcord.TextChannel):
     return all(perms)
 
 
-def channel_summary(birthday_channel_id: int, guild: nextcord.Guild):
+async def channel_summary(birthday_channel_id: int, guild: nextcord.Guild):
     summary = ''
     if birthday_channel_id is not None:
-        channel = guild.get_channel(birthday_channel_id)
+        channel = await bot_utils.get_or_fetch_channel(guild, birthday_channel_id)
         channel_issues = []
         if channel is not None:
             perms = channel.permissions_for(guild.me)
@@ -157,15 +157,17 @@ class BirthdayCommands(commands.Cog):
         for guild_config in guild_configs:
             guild = nextcord.utils.get(self.bot.guilds, id=guild_config.guild_id)
             if guild is None:
+                guild = await bot_utils.get_or_fetch_guild(self.bot, guild_config.guild_id)
+            if guild is None:
                 summary += f'Guild: {guild_config.guild_id} not found\n'
                 continue
             birthday_channel_id = guild_config.birthday_channel_id
             channel_summaries = []
             if birthday_channel_id is not None:
-                channel_summaries.append(channel_summary(birthday_channel_id, guild))
+                channel_summaries.append(await channel_summary(birthday_channel_id, guild))
             baby_month_milestone_channel_id = guild_config.baby_month_milestone_channel_id
             if baby_month_milestone_channel_id is not None:
-                channel_summaries.append(channel_summary(baby_month_milestone_channel_id, guild))
+                channel_summaries.append(await channel_summary(baby_month_milestone_channel_id, guild))
             channel_summaries = [c for c in channel_summaries if c]
             if len(channel_summaries) > 0:
                 summary += f'Guild: {guild.name}\n'

@@ -11,7 +11,7 @@ async def get_or_fetch_guild(bot: nextcord.ext.commands.Bot, guild_id: int):
     return guild
 
 
-async def get_or_fetch_channel(bot: nextcord.ext.commands.Bot, channel_id: int):
+async def get_or_fetch_channel(bot: nextcord.ext.commands.Bot | nextcord.Guild, channel_id: int):
     channel = bot.get_channel(channel_id)
     if channel is None:
         try:
